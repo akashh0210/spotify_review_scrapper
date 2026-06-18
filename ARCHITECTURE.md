@@ -1,0 +1,92 @@
+# ARCHITECTURE.md — Spotify Discovery Review Engine
+
+> Living document. Updated at the end of each build phase. Do not duplicate PROJECT.md (the spec) — this is the as-built map.
+
+---
+
+## Data-flow overview
+
+```
+Sources (Phase 1)
+  Google Play Store  ──────────────────────────────┐
+  Apple App Store RSS (5 storefronts)  ────────────┤
+  Reddit via Pullpush.io (r/spotify, r/truespotify)┤──> data/raw/*.json
+  Spotify Community forum (Khoros/BS4)  ───────────┘
+                                                        |
+                                               Phase 2: clean.py
+                                                        |
+                                               data/clean/reviews.parquet
+                                               (unified schema, deduped)
+                                                        |
+                                               Phase 3: tag.py  (TODO)
+                                                        |
+                                               data/tagged/reviews_tagged.parquet
+                                                        |
+                                       Phase 4: embed.py  (TODO)
+                                                        |
+                                             ChromaDB (local, persistent)
+                                          collection: spotify_reviews
+                                                        |
+                                       Phase 5: aggregate.py  (TODO)
+                                                        |
+                                        data/insights/summary.json
+                                                        |
+                                           Phase 5: rag.py  (TODO)
+                                                        |
+                                        data/insights/answers.json
+                                                        |
+                                       Phase 6: app.py  (TODO)
+                                                        |
+                                           Streamlit UI (two tabs)
+```
+
+---
+
+## src/ file inventory
+
+| File | Responsibility | Input | Output |
+|---|---|---|---|
+| `scrape_playstore.py` | Pulls 3,000 reviews from `com.spotify.music` via `google-play-scraper`. NEWEST + MOST_RELEVANT batches, deduped by `reviewId`. | Google Play API (no auth) | `data/raw/playstore.json` |
+| `scrape_appstore.py` | Loops iTunes RSS customer-review JSON feed, pages 1-10 x storefronts (us, gb, ca, au, in). Parses `feed.entry`, dedupes by review id. Tenacity backoff on 429. | `itunes.apple.com/rss` (no auth) | `data/raw/appstore.json` |
+| `scrape_reddit.py` | Searches r/spotify + r/truespotify for 10 discovery terms via Pullpush.io (no OAuth). Enriches each post with top comments from same API. 2 s delay + tenacity retry. | `api.pullpush.io` (no auth) | `data/raw/reddit.json` |
+| `scrape_forum.py` | Scrapes community.spotify.com (Khoros platform) with requests + BeautifulSoup. Targets Idea Exchange + Music boards + keyword search. Filters to discovery-relevant posts. Captures title, body, kudos count. | `community.spotify.com` (no auth) | `data/raw/forum.json` |
+| `clean.py` | Dedupe + normalize all raw sources into unified schema. | `data/raw/*.json` | `data/clean/reviews.parquet` |
+| `tag.py` | Groq 8B batched tagging with strict JSON schema (themes, sentiment, segment, discovery_related, one_line). Retry once on parse failure, then skip. | `data/clean/reviews.parquet` | `data/tagged/reviews_tagged.parquet` |
+| `embed.py` | sentence-transformers `all-MiniLM-L6-v2` (local) → ChromaDB persistent collection `spotify_reviews`. | `data/tagged/reviews_tagged.parquet` | ChromaDB at `./chroma_db/` |
+| `aggregate.py` | Count themes, sentiment, segment splits. Pull top quoted examples per theme. | `data/tagged/reviews_tagged.parquet` | `data/insights/summary.json` |
+| `rag.py` | Groq 70B answering the six discovery questions over ChromaDB-retrieved evidence. Cited verbatim quotes only. | ChromaDB + `data/insights/summary.json` | `data/insights/answers.json` |
+
+---
+
+## Stack — as actually wired
+
+| Concern | Tool / Model | Notes |
+|---|---|---|
+| Play Store scraping | `google-play-scraper` | App ID `com.spotify.music` |
+| App Store scraping | iTunes RSS JSON feed (requests) | App ID `324684580` |
+| Reddit scraping | Pullpush.io REST API (requests) | No OAuth; replaces deprecated Reddit public JSON |
+| Forum scraping | requests + BeautifulSoup4 | community.spotify.com (Khoros) |
+| Rate limiting | `tenacity` exponential backoff | All network scrapers; 2–4 s base delay |
+| Tagging LLM | Groq `llama-3.1-8b-instant` | High-volume per-review JSON tagging; temp=0 |
+| Synthesis LLM | Groq `llama-3.3-70b-versatile` | Six-question answers + RAG |
+| Embeddings | `sentence-transformers` `all-MiniLM-L6-v2` | Local CPU inference; Groq has no embedding endpoint |
+| Vector store | ChromaDB (persistent, local) | Collection: `spotify_reviews` |
+| Data format | Parquet via `pandas` + `pyarrow` | Intermediate pipeline stages |
+| UI | Streamlit | Two tabs: Insights Dashboard + Ask the Reviews |
+| Charts | Plotly | Theme frequency, segment breakdown |
+| Secrets | `python-dotenv` (.env) | Keys never committed |
+| Deploy target | Streamlit Community Cloud | Fallback: Hugging Face Spaces |
+
+---
+
+## Status by phase
+
+| Phase | Description | Status | Notes |
+|---|---|---|---|
+| 1 | Scrape | **Done** | Play: 3,169 \| App Store RSS: 2,500 \| Reddit (Pullpush): 1,735 \| Forum: 27 \| **Total: 7,431** |
+| 2 | Clean / dedupe / normalize | Pending | — |
+| 3 | Tag (Groq 8B) | Pending | — |
+| 4 | Embed (sentence-transformers → Chroma) | Pending | — |
+| 5 | Aggregate + six-question answers | Pending | — |
+| 6 | Streamlit app | Pending | — |
+| 7 | Deploy (public URL) | Pending | — |

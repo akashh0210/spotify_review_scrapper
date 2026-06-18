@@ -1,12 +1,17 @@
-"""Scrape Spotify discovery-related threads from Reddit via PRAW."""
+"""Scrape Spotify discovery threads from Reddit via Pullpush.io (no auth required).
+
+Pullpush.io is the community-run Pushshift replacement that indexes all public
+Reddit content. No auth, no OAuth. Fetches submission metadata (title + selftext)
+only — no per-post comment API calls, which are slow and redundant at this volume.
+2 s delay between searches + tenacity retry on 429/503.
+"""
 
 import json
-import os
+import time
 from pathlib import Path
 
-from dotenv import load_dotenv
-
-load_dotenv()
+import requests
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 OUTPUT = Path(__file__).parent.parent / "data" / "raw" / "reddit.json"
 
@@ -23,72 +28,84 @@ SEARCH_TERMS = [
     "stuck",
     "radio",
 ]
-POSTS_PER_TERM = 25  # per subreddit × per term; total ≤ 2 * 10 * 25 = 500 threads
-COMMENTS_PER_POST = 20
+RESULTS_PER_SEARCH = 100
+DELAY = 2.0
+
+HEADERS = {
+    "User-Agent": "spotify-discovery-research/0.1 (educational data analysis)",
+    "Accept": "application/json",
+}
+
+PULLPUSH_BASE = "https://api.pullpush.io/reddit/search"
 
 
-def _praw_client():
-    import praw
-
-    return praw.Reddit(
-        client_id=os.environ["REDDIT_CLIENT_ID"],
-        client_secret=os.environ["REDDIT_CLIENT_SECRET"],
-        user_agent=os.environ.get(
-            "REDDIT_USER_AGENT", "spotify-discovery-engine/1.0"
-        ),
+@retry(
+    retry=retry_if_exception_type(requests.HTTPError),
+    wait=wait_exponential(multiplier=2, min=4, max=60),
+    stop=stop_after_attempt(4),
+    reraise=True,
+)
+def _search_submissions(subreddit: str, term: str) -> list[dict]:
+    resp = requests.get(
+        f"{PULLPUSH_BASE}/submission/",
+        headers=HEADERS,
+        params={
+            "subreddit": subreddit,
+            "q": term,
+            "size": RESULTS_PER_SEARCH,
+            "sort": "desc",
+            "sort_type": "score",
+        },
+        timeout=30,
     )
-
-
-def _post_to_dict(post, subreddit: str) -> dict:
-    post.comments.replace_more(limit=0)
-    top_comments = [
-        {"body": c.body, "score": c.score}
-        for c in post.comments[:COMMENTS_PER_POST]
-        if hasattr(c, "body") and len(c.body) > 20
-    ]
-    return {
-        "id": post.id,
-        "subreddit": subreddit,
-        "title": post.title,
-        "selftext": post.selftext,
-        "score": post.score,
-        "url": post.url,
-        "created_utc": post.created_utc,
-        "num_comments": post.num_comments,
-        "top_comments": top_comments,
-    }
+    if resp.status_code in (429, 503):
+        raise requests.HTTPError(f"{resp.status_code} rate-limited")
+    resp.raise_for_status()
+    return resp.json().get("data", [])
 
 
 def scrape() -> list[dict]:
-    reddit = _praw_client()
     seen_ids: set[str] = set()
     results: list[dict] = []
 
-    for sub_name in SUBREDDITS:
-        subreddit = reddit.subreddit(sub_name)
+    for sub in SUBREDDITS:
         for term in SEARCH_TERMS:
-            print(f"  r/{sub_name} — searching '{term}'...", flush=True)
+            print(f"  r/{sub} -- '{term}'...", end=" ", flush=True)
             try:
-                for post in subreddit.search(term, limit=POSTS_PER_TERM, sort="relevance"):
-                    if post.id in seen_ids:
-                        continue
-                    seen_ids.add(post.id)
-                    results.append(_post_to_dict(post, sub_name))
+                submissions = _search_submissions(sub, term)
             except Exception as exc:
-                print(f"    WARNING: search failed for '{term}' in r/{sub_name}: {exc}")
+                print(f"failed: {exc}")
+                time.sleep(DELAY)
+                continue
+
+            added = 0
+            for s in submissions:
+                pid = s.get("id")
+                if not pid or pid in seen_ids:
+                    continue
+                seen_ids.add(pid)
+                results.append({
+                    "id": pid,
+                    "subreddit": s.get("subreddit", sub),
+                    "title": s.get("title", ""),
+                    "selftext": s.get("selftext", ""),
+                    "score": s.get("score", 0),
+                    "url": s.get("url", ""),
+                    "created_utc": s.get("created_utc"),
+                    "num_comments": s.get("num_comments", 0),
+                    "search_term": term,
+                })
+                added += 1
+
+            print(f"+{added} posts (total: {len(results)})", flush=True)
+            time.sleep(DELAY)
 
     return results
 
 
 def main():
-    for var in ("REDDIT_CLIENT_ID", "REDDIT_CLIENT_SECRET"):
-        if not os.getenv(var):
-            raise SystemExit(
-                f"ERROR: {var} not set. Copy .env.example → .env and fill in Reddit creds."
-            )
-
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    print(f"Scraping Reddit: {SUBREDDITS} × {len(SEARCH_TERMS)} terms...")
+    print(f"Scraping Reddit via Pullpush.io: {SUBREDDITS} x {len(SEARCH_TERMS)} terms...")
     data = scrape()
     OUTPUT.write_text(json.dumps(data, indent=2, default=str), encoding="utf-8")
     print(f"Done. {len(data)} unique threads -> {OUTPUT}")

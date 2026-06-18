@@ -35,19 +35,22 @@ Everything the engine does maps back to these six. Bugs / billing / UI / ads are
 
 ## 4. Data sources
 
-| Source | Tool | Notes |
-|---|---|---|
-| Google Play reviews | `google-play-scraper` | App ID `com.spotify.music`. No auth. Pull 2,000–4,000 most-recent + most-relevant. Primary source. |
-| App Store reviews | `app-store-scraper` | App ID `324684580` (US). Best-effort — if the package is flaky, **do not block the pipeline**; ship with Play + Reddit. |
-| Reddit | `praw` | Subreddits `spotify`, `truespotify`. Needs free Reddit app creds. Search/pull threads matching discovery terms (see below). |
+| Source | Tool | Landed count | Notes |
+|---|---|---|---|
+| Google Play reviews | `google-play-scraper` | **3,169** | App ID `com.spotify.music`. No auth. NEWEST + MOST_RELEVANT batches, deduped. Primary source. |
+| App Store reviews | iTunes RSS JSON feed (`requests`) | **2,500** | App ID `324684580`. Pages 1-10 x storefronts us/gb/ca/au/in. No auth. Replaced flaky `app-store-scraper` package with direct RSS API call. |
+| Reddit | Pullpush.io REST API (`requests`) | **1,735** | Subreddits `spotify`, `truespotify`. No OAuth required. Reddit's public `.json` endpoints return 403 as of 2023; Pullpush.io is the community-run Pushshift replacement that indexes all public Reddit content without auth. Submission title + selftext only (no per-post comment API calls). |
+| Spotify Community forum | `requests` + BeautifulSoup4 | **27** | community.spotify.com (Khoros/Lithium platform). Discovery & Promo board, Closed Ideas, Content Questions boards. Filtered to discovery-relevant posts by keyword. Captures title, body, kudos count. |
 
-**Reddit search terms:** `discover weekly`, `recommendations`, `same songs`, `repetitive`, `algorithm`, `new music`, `daily mix`, `autoplay`, `stuck`, `radio`.
+> **Note on paid social (X/Twitter):** Out of scope for a free build. X's API requires paid access ($100/month minimum). Reddit + Community Forum serve as the social-conversation proxy covering the same qualitative signal at zero cost.
+
+**Reddit/forum search terms:** `discover weekly`, `recommendations`, `same songs`, `repetitive`, `algorithm`, `new music`, `daily mix`, `autoplay`, `stuck`, `radio`.
 
 Target volume: a few thousand items total is plenty. Do not over-scrape.
 
 ## 5. Pipeline (each stage writes to disk so it's resumable)
 
-1. **Scrape** → `data/raw/{playstore,appstore,reddit}.json`
+1. **Scrape** → `data/raw/{playstore,appstore,reddit,forum}.json`
 2. **Clean / dedupe / normalize** → `data/clean/reviews.parquet` (unified schema: `id, source, text, rating, date, raw_meta`)
 3. **Tag** (Groq 8B, batched, JSON output) → `data/tagged/reviews_tagged.parquet`
 4. **Embed** (sentence-transformers) → ChromaDB persistent collection `spotify_reviews`

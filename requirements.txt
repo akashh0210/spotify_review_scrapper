@@ -1,7 +1,7 @@
 groq
 google-play-scraper
-app-store-scraper
-praw
+requests
+beautifulsoup4
 chromadb
 sentence-transformers
 streamlit
