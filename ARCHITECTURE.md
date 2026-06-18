@@ -48,9 +48,9 @@ Sources (Phase 1)
 |---|---|---|---|
 | `scrape_playstore.py` | Pulls 3,000 reviews from `com.spotify.music` via `google-play-scraper`. NEWEST + MOST_RELEVANT batches, deduped by `reviewId`. | Google Play API (no auth) | `data/raw/playstore.json` |
 | `scrape_appstore.py` | Loops iTunes RSS customer-review JSON feed, pages 1-10 x storefronts (us, gb, ca, au, in). Parses `feed.entry`, dedupes by review id. Tenacity backoff on 429. | `itunes.apple.com/rss` (no auth) | `data/raw/appstore.json` |
-| `scrape_reddit.py` | Searches r/spotify + r/truespotify for 10 discovery terms via Pullpush.io (no OAuth). Enriches each post with top comments from same API. 2 s delay + tenacity retry. | `api.pullpush.io` (no auth) | `data/raw/reddit.json` |
-| `scrape_forum.py` | Scrapes community.spotify.com (Khoros platform) with requests + BeautifulSoup. Targets Idea Exchange + Music boards + keyword search. Filters to discovery-relevant posts. Captures title, body, kudos count. | `community.spotify.com` (no auth) | `data/raw/forum.json` |
-| `clean.py` | Dedupe + normalize all raw sources into unified schema. | `data/raw/*.json` | `data/clean/reviews.parquet` |
+| `scrape_reddit.py` | Searches r/spotify + r/truespotify for 10 discovery terms via Pullpush.io (no OAuth). Submission title + selftext only; 2 s delay between searches + tenacity retry. | `api.pullpush.io` (no auth) | `data/raw/reddit.json` |
+| `scrape_forum.py` | Scrapes community.spotify.com (Khoros platform) with requests + BeautifulSoup. Targets Discovery & Promo, Closed Ideas, Content Questions boards. Filters to discovery-relevant posts. Captures title, body, kudos count. | `community.spotify.com` (no auth) | `data/raw/forum.json` |
+| `clean.py` | Loads all four raw sources, applies text cleaning (HTML entities, zero-width chars, Reddit markdown/quote artifacts), drops empties / <15-char / no-alpha rows, dedupes by normalized-text fingerprint. Outputs unified 7-column schema. | `data/raw/*.json` | `data/clean/reviews.parquet` |
 | `tag.py` | Groq 8B batched tagging with strict JSON schema (themes, sentiment, segment, discovery_related, one_line). Retry once on parse failure, then skip. | `data/clean/reviews.parquet` | `data/tagged/reviews_tagged.parquet` |
 | `embed.py` | sentence-transformers `all-MiniLM-L6-v2` (local) → ChromaDB persistent collection `spotify_reviews`. | `data/tagged/reviews_tagged.parquet` | ChromaDB at `./chroma_db/` |
 | `aggregate.py` | Count themes, sentiment, segment splits. Pull top quoted examples per theme. | `data/tagged/reviews_tagged.parquet` | `data/insights/summary.json` |
@@ -84,7 +84,7 @@ Sources (Phase 1)
 | Phase | Description | Status | Notes |
 |---|---|---|---|
 | 1 | Scrape | **Done** | Play: 3,169 \| App Store RSS: 2,500 \| Reddit (Pullpush): 1,735 \| Forum: 27 \| **Total: 7,431** |
-| 2 | Clean / dedupe / normalize | Pending | — |
+| 2 | Clean / dedupe / normalize | **Done** | 7,431 raw → 6,778 clean (653 dropped: 584 too-short, 57 duplicates, 12 no-alpha). Non-English: 17 rows (0.3%) — kept, tagged in Phase 3. Schema: `id\|source\|text\|rating\|date\|score\|url`. |
 | 3 | Tag (Groq 8B) | Pending | — |
 | 4 | Embed (sentence-transformers → Chroma) | Pending | — |
 | 5 | Aggregate + six-question answers | Pending | — |
