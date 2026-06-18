@@ -1,0 +1,12 @@
+groq
+google-play-scraper
+app-store-scraper
+praw
+chromadb
+sentence-transformers
+streamlit
+plotly
+pandas
+pyarrow
+python-dotenv
+tenacity

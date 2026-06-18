@@ -1,0 +1,28 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.ipynb_checkpoints/
+
+# Scraped + intermediate data (regenerable)
+data/raw/
+data/clean/
+data/tagged/
+
+# Vector store
+chroma_db/
+*.sqlite3
+
+# Keep computed insights and folder structure
+!data/insights/
+!data/**/.gitkeep
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
