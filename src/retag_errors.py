@@ -26,8 +26,8 @@ BASE       = Path(__file__).parent.parent
 TAGGED     = BASE / "data" / "tagged" / "reviews_tagged.parquet"
 RETAG_CKPT = BASE / "data" / "tagged" / "_retag_checkpoint.parquet"
 
-MODEL            = "gemini-2.0-flash"   # swap to gemini-2.5-flash-lite for higher RPD
-PROVIDER_TAG     = "gemini-2.0-flash"
+MODEL            = "gemini-1.5-flash"   # separate daily quota from gemini-2.0-flash
+PROVIDER_TAG     = "gemini-1.5-flash"
 BATCH_SIZE       = 10
 CKPT_EVERY       = 50
 INTER_CALL_SLEEP = 6.0   # 6 s = 10 RPM, within Gemini free-tier limit

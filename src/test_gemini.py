@@ -16,13 +16,13 @@ if not api_key:
     raise SystemExit("ERROR: GEMINI_API_KEY not set in .env.local")
 
 print(f"Testing key: {api_key[:8]}...{api_key[-4:]}")
-print("Sending single test call to gemini-2.0-flash...\n")
+print("Sending single test call to gemini-1.5-flash...\n")
 
 client = genai.Client(api_key=api_key)
 
 resp = client.models.generate_content(
-    model="gemini-2.0-flash",
-    contents='Return exactly this JSON and nothing else: {"status": "ok", "model": "gemini-2.0-flash"}',
+    model="gemini-1.5-flash",
+    contents='Return exactly this JSON and nothing else: {"status": "ok", "model": "gemini-1.5-flash"}',
     config={"temperature": 0, "response_mime_type": "application/json"},
 )
 
