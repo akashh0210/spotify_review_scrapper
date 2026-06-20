@@ -205,18 +205,27 @@ def _call_model(client, model: str, batch: list[dict]) -> str:
     return resp.text
 
 
-def _api_call(client, batch: list[dict]) -> tuple[str, str]:
-    """Try gemini-2.5-flash-lite; fall back to gemini-2.5-flash on non-rate error.
+def _is_per_minute_limit(exc: Exception) -> bool:
+    """True only for temporary per-minute 429s (not daily quota exhaustion)."""
+    msg = str(exc).lower()
+    return _is_rate_limited(exc) and ("per minute" in msg or "perminute" in msg)
 
+
+def _api_call(client, batch: list[dict]) -> tuple[str, str]:
+    """Try gemini-2.5-flash-lite; fall back to gemini-2.5-flash on quota/error.
+
+    Per-minute rate limits on lite → re-raise (tenacity already retried).
+    Daily quota exhausted or structural error → try flash.
     Returns (response_text, provider_tag).
     """
     try:
         return _call_model(client, MODEL_LITE, batch), TAG_LITE
     except Exception as exc:
-        if _is_rate_limited(exc):
-            raise   # rate limits propagate; tenacity in _call_model handles retries
-        # Structural/model error on lite → try flash
-        print(f"\n  [lite->flash fallback]: {str(exc)[:80]}", flush=True)
+        if _is_per_minute_limit(exc):
+            raise   # temporary per-minute limit; propagate so caller can back off
+        # Daily quota exhausted or structural error on lite → fall back to flash
+        reason = "daily quota" if _is_rate_limited(exc) else str(exc)[:60]
+        print(f"\n  [lite->flash]: {reason}", flush=True)
     return _call_model(client, MODEL_FLASH, batch), TAG_FLASH
 
 
