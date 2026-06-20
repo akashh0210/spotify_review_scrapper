@@ -85,7 +85,7 @@ Sources (Phase 1)
 |---|---|---|---|
 | 1 | Scrape | **Done** | Play: 3,169 \| App Store RSS: 2,500 \| Reddit (Pullpush): 1,735 \| Forum: 27 \| **Total: 7,431** |
 | 2 | Clean / dedupe / normalize | **Done** | 7,431 raw → 6,778 clean (653 dropped: 584 too-short, 57 duplicates, 12 no-alpha). Non-English: 17 rows (0.3%) — kept, tagged in Phase 3. Schema: `id\|source\|text\|rating\|date\|score\|url`. |
-| 3 | Tag (Groq 8B) | Pending | — |
+| 3 | Tag (Groq 8B) | **Done** | Groq llama-3.1-8b-instant, temp=0, batch=10, checkpoint every 50 rows. Coverage: playstore (all 2,730) + appstore (1,370/2,340 — partial by design, sufficient signal) + reddit (all 1,681) + forum (all 27). Appstore remainder intentionally skipped. Output: `reviews_tagged.parquet`. |
 | 4 | Embed (sentence-transformers → Chroma) | Pending | — |
 | 5 | Aggregate + six-question answers | Pending | — |
 | 6 | Streamlit app | Pending | — |
