@@ -1,11 +1,11 @@
-"""Re-tag all tag_error=True rows in reviews_tagged.parquet via Gemini.
+"""Re-tag all tag_error=True rows in reviews_tagged.parquet via Gemini 2.5.
 
-Uses google-genai SDK (supports AQ.* auth keys).
+Primary model : gemini-2.5-flash-lite  (free-tier quota confirmed)
+Fallback model: gemini-2.5-flash        (if lite returns a non-quota error)
+
 Overwrites only error rows in-place; all good rows are preserved untouched.
 Checkpoints every 50 rows to data/tagged/_retag_checkpoint.parquet.
-
-Rate: 6 s between API calls (~10 RPM, within Gemini free-tier limit).
-Model: gemini-2.0-flash (set MODEL below; gemini-2.5-flash-lite has higher RPD headroom).
+Honors the retryDelay the API returns on 429s instead of guessing a backoff.
 
 Run:  python src/retag_errors.py
 """
@@ -18,7 +18,7 @@ from pathlib import Path
 
 import pandas as pd
 from dotenv import load_dotenv
-from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_fixed
 
 load_dotenv(".env.local") or load_dotenv()
 
@@ -26,13 +26,17 @@ BASE       = Path(__file__).parent.parent
 TAGGED     = BASE / "data" / "tagged" / "reviews_tagged.parquet"
 RETAG_CKPT = BASE / "data" / "tagged" / "_retag_checkpoint.parquet"
 
-MODEL            = "gemini-1.5-flash"   # separate daily quota from gemini-2.0-flash
-PROVIDER_TAG     = "gemini-1.5-flash"
+MODEL_LITE    = "gemini-2.5-flash-lite"   # primary; confirmed free-tier quota
+MODEL_FLASH   = "gemini-2.5-flash"        # fallback if lite has non-quota error
+
+TAG_LITE   = "gemini-2.5-flash-lite"
+TAG_FLASH  = "gemini-2.5-flash"
+
 BATCH_SIZE       = 10
 CKPT_EVERY       = 50
-INTER_CALL_SLEEP = 6.0   # 6 s = 10 RPM, within Gemini free-tier limit
+INTER_CALL_SLEEP = 4.0   # ~15 RPM; keeps us under free-tier per-minute cap
 
-# ── closed lists (same as tag.py) ─────────────────────────────────────────────
+# ── closed lists (same taxonomy as tag.py) ────────────────────────────────────
 VALID_THEMES = frozenset({
     "recommendation_repetition", "discovery_friction", "generic_recommendations",
     "discover_weekly_dailymix",  "autoplay_radio_loop", "no_control_or_intent",
@@ -44,13 +48,7 @@ VALID_SEGMENTS   = frozenset({
     "mood_context_listener", "podcast_listener", "unknown",
 })
 
-FALLBACK_TAG: dict = {
-    "themes": ["non_discovery"], "sentiment": "neutral", "segment": "unknown",
-    "discovery_related": False, "one_line": "", "language": "en",
-    "tag_error": True, "tagged_by": PROVIDER_TAG,
-}
-
-# ── prompt (same taxonomy as tag.py) ──────────────────────────────────────────
+# ── system prompt (identical to tag.py) ───────────────────────────────────────
 SYSTEM = """\
 You are a Spotify music-app review classifier focused on music discovery and recommendation UX.
 
@@ -102,10 +100,10 @@ def _extract_array(text: str) -> list:
     text = re.sub(r"```(?:json)?\s*|\s*```", "", text).strip()
     start = text.find("[")
     if start == -1:
-        obj_start = text.find("{")
-        if obj_start != -1:
+        obj_s = text.find("{")
+        if obj_s != -1:
             depth, end = 0, -1
-            for i, ch in enumerate(text[obj_start:], obj_start):
+            for i, ch in enumerate(text[obj_s:], obj_s):
                 if ch == "{": depth += 1
                 elif ch == "}":
                     depth -= 1
@@ -113,7 +111,7 @@ def _extract_array(text: str) -> list:
                         end = i
                         break
             if end != -1:
-                return [json.loads(text[obj_start : end + 1])]
+                return [json.loads(text[obj_s : end + 1])]
         raise ValueError("No JSON in response")
     depth, end = 0, -1
     for i, ch in enumerate(text[start:], start):
@@ -129,7 +127,7 @@ def _extract_array(text: str) -> list:
     return parsed if isinstance(parsed, list) else [parsed]
 
 
-def _validate(raw) -> dict:
+def _validate(raw, provider_tag: str) -> dict:
     if isinstance(raw, str):
         raw = {"themes": [raw]}
     elif isinstance(raw, list):
@@ -159,26 +157,44 @@ def _validate(raw) -> dict:
         "one_line":          str(raw.get("one_line") or "")[:200],
         "language":          lang,
         "tag_error":         False,
-        "tagged_by":         PROVIDER_TAG,
+        "tagged_by":         provider_tag,
     }
 
 
-# ── Gemini API call with rate-limit retry ─────────────────────────────────────
+# ── rate-limit helpers ────────────────────────────────────────────────────────
 
 def _is_rate_limited(exc: Exception) -> bool:
     msg = str(exc).lower()
-    return any(kw in msg for kw in ("429", "quota", "rate limit", "resource exhausted", "too many"))
+    return any(kw in msg for kw in ("429", "quota", "resource exhausted", "rate limit", "too many"))
 
+
+def _extract_retry_delay(exc: Exception) -> float:
+    """Parse retryDelay from Gemini 429 error body. Falls back to 30 s."""
+    m = re.search(r"retryDelay['\"]:\s*['\"](\d+)", str(exc))
+    return float(m.group(1)) + 2.0 if m else 30.0
+
+
+def _retry_wait(retry_state) -> float:
+    """Honor the API-supplied retryDelay; fall back to exponential backoff."""
+    exc = retry_state.outcome.exception()
+    if exc and _is_rate_limited(exc):
+        delay = _extract_retry_delay(exc)
+        print(f"\n  [rate-limit] backing off {delay:.0f}s...", flush=True)
+        return delay
+    return min(10.0 * (2 ** retry_state.attempt_number), 120.0)
+
+
+# ── Gemini API call ───────────────────────────────────────────────────────────
 
 @retry(
     retry=retry_if_exception(_is_rate_limited),
-    wait=wait_exponential(multiplier=2, min=10, max=120),
-    stop=stop_after_attempt(5),
+    wait=_retry_wait,
+    stop=stop_after_attempt(6),
     reraise=True,
 )
-def _api_call(client, batch: list[dict]) -> str:
+def _call_model(client, model: str, batch: list[dict]) -> str:
     resp = client.models.generate_content(
-        model=MODEL,
+        model=model,
         contents=_build_prompt(batch),
         config={
             "temperature": 0,
@@ -189,32 +205,50 @@ def _api_call(client, batch: list[dict]) -> str:
     return resp.text
 
 
+def _api_call(client, batch: list[dict]) -> tuple[str, str]:
+    """Try gemini-2.5-flash-lite; fall back to gemini-2.5-flash on non-rate error.
+
+    Returns (response_text, provider_tag).
+    """
+    try:
+        return _call_model(client, MODEL_LITE, batch), TAG_LITE
+    except Exception as exc:
+        if _is_rate_limited(exc):
+            raise   # rate limits propagate; tenacity in _call_model handles retries
+        # Structural/model error on lite → try flash
+        print(f"\n  [lite->flash fallback]: {str(exc)[:80]}", flush=True)
+    return _call_model(client, MODEL_FLASH, batch), TAG_FLASH
+
+
 def _tag_batch(client, batch: list[dict]) -> list[dict]:
-    """Tag a batch; retry parse once; then fall back row-by-row."""
+    """Tag a batch; retry parse once; then row-by-row fallback."""
     for attempt in range(2):
         try:
-            content  = _api_call(client, batch)
+            content, provider_tag = _api_call(client, batch)
             raw_list = _extract_array(content)
             if len(raw_list) != len(batch):
                 raise ValueError(f"expected {len(batch)}, got {len(raw_list)}")
-            return [_validate(r) for r in raw_list]
+            return [_validate(r, provider_tag) for r in raw_list]
         except Exception as exc:
             if attempt == 0:
                 print(f"\n  [retry-parse] {exc}", flush=True)
                 time.sleep(2)
             else:
-                print(f"\n  [batch-fail] falling back to row-by-row: {exc}", flush=True)
+                print(f"\n  [batch-fail] row-by-row: {exc}", flush=True)
 
     results: list[dict] = []
     for row in batch:
         try:
-            content  = _api_call(client, [row])
+            content, provider_tag = _api_call(client, [row])
             raw_list = _extract_array(content)
-            results.append(_validate(raw_list[0]))
+            results.append(_validate(raw_list[0], provider_tag))
         except Exception as exc:
             print(f"\n  [row-fallback] id={row['id']} -> tag_error ({exc})", flush=True)
-            fb = dict(FALLBACK_TAG)
-            results.append(fb)
+            results.append({
+                "themes": ["non_discovery"], "sentiment": "neutral", "segment": "unknown",
+                "discovery_related": False, "one_line": "", "language": "en",
+                "tag_error": True, "tagged_by": TAG_LITE,
+            })
         time.sleep(2)
     return results
 
@@ -232,7 +266,6 @@ def main() -> None:
     if not TAGGED.exists():
         raise SystemExit(f"ERROR: {TAGGED} not found — run tag.py first")
 
-    # Load the full tagged parquet and split
     df       = pd.read_parquet(TAGGED)
     good_df  = df[~df["tag_error"]].copy()
     error_df = df[df["tag_error"]].copy()
@@ -244,7 +277,7 @@ def main() -> None:
     print()
     print("Error breakdown by source:")
     for src, grp in error_df.groupby("source"):
-        print(f"  {src:<12} {len(grp):>5} errors")
+        print(f"  {src:<12} {len(grp):>5}")
     print()
 
     # Resume from retag checkpoint
@@ -254,16 +287,17 @@ def main() -> None:
         ckpt_df  = pd.read_parquet(RETAG_CKPT)
         retagged = ckpt_df.to_dict("records")
         done_ids = {r["id"] for r in retagged}
-        print(f"Retag checkpoint: {len(done_ids)} rows already re-tagged. Resuming...")
+        print(f"Retag checkpoint: {len(done_ids)} already re-tagged. Resuming...")
 
     remaining   = error_df[~error_df["id"].isin(done_ids)].reset_index(drop=True)
     n_remaining = len(remaining)
     n_batches   = (n_remaining + BATCH_SIZE - 1) // BATCH_SIZE
 
-    print(f"Model  : {MODEL}")
-    print(f"To tag : {n_remaining} rows in {n_batches} batches of {BATCH_SIZE}")
-    print(f"Rate   : {INTER_CALL_SLEEP}s between calls (~{60/INTER_CALL_SLEEP:.0f} RPM)")
-    print(f"ETA    : ~{n_batches * INTER_CALL_SLEEP / 60:.0f} min\n")
+    print(f"Primary model : {MODEL_LITE}")
+    print(f"Fallback model: {MODEL_FLASH}")
+    print(f"To tag  : {n_remaining} rows in {n_batches} batches of {BATCH_SIZE}")
+    print(f"Pacing  : {INTER_CALL_SLEEP}s between calls (~{60/INTER_CALL_SLEEP:.0f} RPM)")
+    print(f"ETA     : ~{n_batches * INTER_CALL_SLEEP / 60:.0f} min\n")
 
     t0        = time.time()
     rows_done = 0
@@ -276,11 +310,9 @@ def main() -> None:
         tags = _tag_batch(client, batch)
 
         for row, tag in zip(batch, tags):
-            merged = {**row, **tag}
-            retagged.append(merged)
+            retagged.append({**row, **tag})
             rows_done += 1
 
-        # Progress
         n_done   = len(done_ids) + rows_done
         elapsed  = time.time() - t0
         rate     = rows_done / max(elapsed, 1)
@@ -297,10 +329,9 @@ def main() -> None:
 
         time.sleep(INTER_CALL_SLEEP)
 
-    # Save final retag checkpoint
     pd.DataFrame(retagged).to_parquet(RETAG_CKPT, index=False)
 
-    # Merge good rows + all retagged rows and write back
+    # Merge good + retagged, write back in-place
     retagged_df = pd.DataFrame(retagged)
     combined    = pd.concat([good_df, retagged_df], ignore_index=True)
     combined.to_parquet(TAGGED, index=False)
@@ -323,7 +354,7 @@ def main() -> None:
     print(f"discovery_related True : {n_disc} ({n_disc/n*100:.1f}%)")
     print(f"discovery_related False: {n-n_disc} ({(n-n_disc)/n*100:.1f}%)")
 
-    print("\nPer-source breakdown (errors after re-tag):")
+    print("\nPer-source (errors after re-tag):")
     for src, grp in out.groupby("source"):
         errs = int(grp["tag_error"].sum())
         print(f"  {src:<12} {len(grp):>5} rows | errors={errs} ({errs/len(grp)*100:.1f}%)")
@@ -331,7 +362,7 @@ def main() -> None:
     print("\nPer-provider (tagged_by):")
     for prov, grp in out.groupby("tagged_by"):
         errs = int(grp["tag_error"].sum())
-        print(f"  {prov:<25} {len(grp):>5} rows | errors={errs} ({errs/len(grp)*100:.1f}%)")
+        print(f"  {prov:<28} {len(grp):>5} rows | errors={errs} ({errs/len(grp)*100:.1f}%)")
 
     print("\nSentiment:")
     for val, cnt in out["sentiment"].value_counts().items():

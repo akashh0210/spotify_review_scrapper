@@ -41,11 +41,13 @@ TAGGED = BASE / "data" / "tagged" / "reviews_tagged.parquet"
 CKPT   = BASE / "data" / "tagged" / "_checkpoint.parquet"
 
 # ── config ────────────────────────────────────────────────────────────────────
-MODEL_GROQ   = os.getenv("GROQ_TAGGING_MODEL", "llama-3.1-8b-instant")
-MODEL_GEMINI = "gemini-2.0-flash"
+MODEL_GROQ          = os.getenv("GROQ_TAGGING_MODEL", "llama-3.1-8b-instant")
+MODEL_GEMINI        = "gemini-2.5-flash-lite"   # primary Gemini (quota confirmed)
+MODEL_GEMINI_FLASH  = "gemini-2.5-flash"         # fallback if lite errors
 
-PROVIDER_GROQ   = "groq-llama-3.1-8b"
-PROVIDER_GEMINI = "gemini-2.0-flash"
+PROVIDER_GROQ         = "groq-llama-3.1-8b"
+PROVIDER_GEMINI       = "gemini-2.5-flash-lite"
+PROVIDER_GEMINI_FLASH = "gemini-2.5-flash"
 
 BATCH_SIZE        = 10
 CKPT_EVERY        = 50
@@ -258,24 +260,32 @@ def _init_gemini() -> None:
     from google import genai
     _gemini_client = genai.Client(api_key=api_key)
     print(
-        f"\n[provider] Switched to Gemini {MODEL_GEMINI} "
-        "(Groq daily quota exhausted — continuing with Gemini)",
+        f"\n[provider] Switched to Gemini ({MODEL_GEMINI} w/ {MODEL_GEMINI_FLASH} fallback) "
+        "— Groq daily quota exhausted",
         flush=True,
     )
 
 
-def _api_call_gemini(batch: list[dict]) -> str:
+def _api_call_gemini(batch: list[dict]) -> tuple[str, str]:
+    """Try gemini-2.5-flash-lite; fall back to gemini-2.5-flash on non-rate error.
+
+    Returns (response_text, provider_tag).
+    """
     _init_gemini()
-    resp = _gemini_client.models.generate_content(
-        model=MODEL_GEMINI,
-        contents=_build_prompt(batch),
-        config={
-            "temperature": 0,
-            "response_mime_type": "application/json",
-            "system_instruction": SYSTEM,
-        },
-    )
-    return resp.text
+    prompt = _build_prompt(batch)
+    cfg = {"temperature": 0, "response_mime_type": "application/json", "system_instruction": SYSTEM}
+
+    for model, tag in [(MODEL_GEMINI, PROVIDER_GEMINI), (MODEL_GEMINI_FLASH, PROVIDER_GEMINI_FLASH)]:
+        try:
+            resp = _gemini_client.models.generate_content(model=model, contents=prompt, config=cfg)
+            return resp.text, tag
+        except Exception as exc:
+            msg = str(exc).lower()
+            is_quota = any(kw in msg for kw in ("429", "quota", "resource exhausted", "rate limit"))
+            if is_quota or model == MODEL_GEMINI_FLASH:
+                raise   # rate limits and final-fallback failures propagate
+            print(f"\n  [gemini lite->flash]: {str(exc)[:80]}", flush=True)
+    raise RuntimeError("unreachable")
 
 
 # ── unified call with provider fallback ───────────────────────────────────────
@@ -295,8 +305,8 @@ def _call_active(client: groq_sdk.Groq, batch: list[dict]) -> tuple[str, str]:
                 "\n[provider] Groq daily quota hit — switching to Gemini for remainder of run",
                 flush=True,
             )
-            return _api_call_gemini(batch), PROVIDER_GEMINI
-    return _api_call_gemini(batch), PROVIDER_GEMINI
+            return _api_call_gemini(batch)   # returns (text, provider_tag)
+    return _api_call_gemini(batch)       # returns (text, provider_tag)
 
 
 # ── batch tagging ─────────────────────────────────────────────────────────────
