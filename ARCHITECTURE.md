@@ -51,7 +51,7 @@ Sources (Phase 1)
 | `scrape_reddit.py` | Searches r/spotify + r/truespotify for 10 discovery terms via Pullpush.io (no OAuth). Submission title + selftext only; 2 s delay between searches + tenacity retry. | `api.pullpush.io` (no auth) | `data/raw/reddit.json` |
 | `scrape_forum.py` | Scrapes community.spotify.com (Khoros platform) with requests + BeautifulSoup. Targets Discovery & Promo, Closed Ideas, Content Questions boards. Filters to discovery-relevant posts. Captures title, body, kudos count. | `community.spotify.com` (no auth) | `data/raw/forum.json` |
 | `clean.py` | Loads all four raw sources, applies text cleaning (HTML entities, zero-width chars, Reddit markdown/quote artifacts), drops empties / <15-char / no-alpha rows, dedupes by normalized-text fingerprint. Outputs unified 7-column schema. | `data/raw/*.json` | `data/clean/reviews.parquet` |
-| `tag.py` | Groq 8B batched tagging with strict JSON schema (themes, sentiment, segment, discovery_related, one_line). Retry once on parse failure, then skip. | `data/clean/reviews.parquet` | `data/tagged/reviews_tagged.parquet` |
+| `tag.py` | Groq 8B batched tagging (primary) with Gemini 2.0 Flash daily-quota fallback. Strict JSON schema: themes, sentiment, segment, discovery_related, one_line, language, tag_error, **tagged_by** (model provenance). Depth-counting JSON parser avoids trailing-bracket corruption. Retry once on parse failure; row-by-row fallback on second failure; FALLBACK tag on individual row failure. Sources tagged: playstore (all), appstore (partial 1370/2340), reddit (all), forum (all). | `data/clean/reviews.parquet` | `data/tagged/reviews_tagged.parquet` |
 | `embed.py` | sentence-transformers `all-MiniLM-L6-v2` (local) → ChromaDB persistent collection `spotify_reviews`. | `data/tagged/reviews_tagged.parquet` | ChromaDB at `./chroma_db/` |
 | `aggregate.py` | Count themes, sentiment, segment splits. Pull top quoted examples per theme. | `data/tagged/reviews_tagged.parquet` | `data/insights/summary.json` |
 | `rag.py` | Groq 70B answering the six discovery questions over ChromaDB-retrieved evidence. Cited verbatim quotes only. | ChromaDB + `data/insights/summary.json` | `data/insights/answers.json` |
@@ -67,7 +67,9 @@ Sources (Phase 1)
 | Reddit scraping | Pullpush.io REST API (requests) | No OAuth; replaces deprecated Reddit public JSON |
 | Forum scraping | requests + BeautifulSoup4 | community.spotify.com (Khoros) |
 | Rate limiting | `tenacity` exponential backoff | All network scrapers; 2–4 s base delay |
-| Tagging LLM | Groq `llama-3.1-8b-instant` | High-volume per-review JSON tagging; temp=0 |
+| Tagging LLM (primary) | Groq `llama-3.1-8b-instant` | Per-review JSON tagging; temp=0; per-minute 429 → tenacity backoff |
+| Tagging LLM (fallback) | Google Gemini `gemini-2.0-flash` | Activated only on Groq TPD daily-quota 429; identical prompt + schema |
+| Provenance field | `tagged_by` column | Records model used per row (`groq-llama-3.1-8b` or `gemini-2.0-flash`) for cross-provider audit |
 | Synthesis LLM | Groq `llama-3.3-70b-versatile` | Six-question answers + RAG |
 | Embeddings | `sentence-transformers` `all-MiniLM-L6-v2` | Local CPU inference; Groq has no embedding endpoint |
 | Vector store | ChromaDB (persistent, local) | Collection: `spotify_reviews` |
