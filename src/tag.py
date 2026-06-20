@@ -54,7 +54,7 @@ INTER_BATCH_SLEEP = 1.0
 
 # ── provider state (module-level, mutated on quota switch) ────────────────────
 _active_provider: str = "groq"   # "groq" | "gemini"
-_gemini_model          = None    # lazy-init on first fallback
+_gemini_client         = None    # lazy-init on first fallback (google-genai SDK)
 
 
 class _DailyQuotaExhausted(Exception):
@@ -247,20 +247,16 @@ def _api_call_groq(client: groq_sdk.Groq, batch: list[dict]) -> str:
 # ── provider: Gemini ──────────────────────────────────────────────────────────
 
 def _init_gemini() -> None:
-    global _gemini_model
-    if _gemini_model is not None:
+    global _gemini_client
+    if _gemini_client is not None:
         return
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise SystemExit(
             "ERROR: Groq daily quota exhausted and GEMINI_API_KEY not set in .env.local"
         )
-    import google.generativeai as genai
-    genai.configure(api_key=api_key)
-    _gemini_model = genai.GenerativeModel(
-        model_name=MODEL_GEMINI,
-        system_instruction=SYSTEM,
-    )
+    from google import genai
+    _gemini_client = genai.Client(api_key=api_key)
     print(
         f"\n[provider] Switched to Gemini {MODEL_GEMINI} "
         "(Groq daily quota exhausted — continuing with Gemini)",
@@ -270,10 +266,14 @@ def _init_gemini() -> None:
 
 def _api_call_gemini(batch: list[dict]) -> str:
     _init_gemini()
-    import google.generativeai as genai
-    resp = _gemini_model.generate_content(
-        _build_prompt(batch),
-        generation_config=genai.GenerationConfig(temperature=0),
+    resp = _gemini_client.models.generate_content(
+        model=MODEL_GEMINI,
+        contents=_build_prompt(batch),
+        config={
+            "temperature": 0,
+            "response_mime_type": "application/json",
+            "system_instruction": SYSTEM,
+        },
     )
     return resp.text
 

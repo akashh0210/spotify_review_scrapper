@@ -1,5 +1,5 @@
 groq
-google-generativeai
+google-genai
 google-play-scraper
 requests
 beautifulsoup4
