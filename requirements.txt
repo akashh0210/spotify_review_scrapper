@@ -4,12 +4,6 @@ groq==1.4.0
 chromadb==1.0.0
 sentence-transformers==3.4.1
 
-# PyTorch CPU-only build — avoids pulling the full 2 GB CUDA wheel on Streamlit Cloud.
-# If Streamlit Cloud fails at this line, create a packages.txt in the repo root
-# containing: python3-dev
-# Then re-deploy. The +cpu variant is safe for CPU-only inference (embeddings).
-torch==2.9.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
-
 # ── unpinned — update freely ───────────────────────────────────────────────────
 google-genai
 google-play-scraper
