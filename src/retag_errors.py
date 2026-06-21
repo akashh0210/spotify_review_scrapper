@@ -1,11 +1,9 @@
-"""Re-tag all tag_error=True rows in reviews_tagged.parquet via Gemini 2.5.
+"""Re-tag all tag_error=True rows in reviews_tagged.parquet via Groq.
 
-Primary model : gemini-2.5-flash-lite  (free-tier quota confirmed)
-Fallback model: gemini-2.5-flash        (if lite returns a non-quota error)
-
-Overwrites only error rows in-place; all good rows are preserved untouched.
+Uses Groq llama-3.1-8b-instant — same model, prompt, and JSON schema as the
+original tag.py run. Overwrites only error rows in-place; good rows untouched.
 Checkpoints every 50 rows to data/tagged/_retag_checkpoint.parquet.
-Honors the retryDelay the API returns on 429s instead of guessing a backoff.
+Tenacity exponential backoff on Groq RateLimitError (429).
 
 Run:  python src/retag_errors.py
 """
@@ -16,9 +14,15 @@ import re
 import time
 from pathlib import Path
 
+import groq as groq_sdk
 import pandas as pd
 from dotenv import load_dotenv
-from tenacity import retry, retry_if_exception, stop_after_attempt, wait_fixed
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 load_dotenv(".env.local") or load_dotenv()
 
@@ -26,17 +30,15 @@ BASE       = Path(__file__).parent.parent
 TAGGED     = BASE / "data" / "tagged" / "reviews_tagged.parquet"
 RETAG_CKPT = BASE / "data" / "tagged" / "_retag_checkpoint.parquet"
 
-MODEL_LITE    = "gemini-2.5-flash-lite"   # primary; confirmed free-tier quota
-MODEL_FLASH   = "gemini-2.5-flash"        # fallback if lite has non-quota error
+MODEL_GROQ   = os.getenv("GROQ_TAGGING_MODEL", "llama-3.1-8b-instant")
+PROVIDER_TAG = "groq-llama-3.1-8b"
 
-TAG_LITE   = "gemini-2.5-flash-lite"
-TAG_FLASH  = "gemini-2.5-flash"
+BATCH_SIZE        = 10
+CKPT_EVERY        = 50
+MAX_TEXT_CHARS    = 350
+INTER_CALL_SLEEP  = 1.0
 
-BATCH_SIZE       = 10
-CKPT_EVERY       = 50
-INTER_CALL_SLEEP = 4.0   # ~15 RPM; keeps us under free-tier per-minute cap
-
-# ── closed lists (same taxonomy as tag.py) ────────────────────────────────────
+# ── closed lists (same as tag.py) ─────────────────────────────────────────────
 VALID_THEMES = frozenset({
     "recommendation_repetition", "discovery_friction", "generic_recommendations",
     "discover_weekly_dailymix",  "autoplay_radio_loop", "no_control_or_intent",
@@ -76,8 +78,6 @@ RULES:
 * language: "en" if primarily English, else "other"
 
 You receive a numbered list of reviews. Return a JSON ARRAY with exactly one object per review, same order."""
-
-MAX_TEXT_CHARS = 350
 
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -127,7 +127,7 @@ def _extract_array(text: str) -> list:
     return parsed if isinstance(parsed, list) else [parsed]
 
 
-def _validate(raw, provider_tag: str) -> dict:
+def _validate(raw) -> dict:
     if isinstance(raw, str):
         raw = {"themes": [raw]}
     elif isinstance(raw, list):
@@ -157,87 +157,42 @@ def _validate(raw, provider_tag: str) -> dict:
         "one_line":          str(raw.get("one_line") or "")[:200],
         "language":          lang,
         "tag_error":         False,
-        "tagged_by":         provider_tag,
+        "tagged_by":         PROVIDER_TAG,
     }
 
 
-# ── rate-limit helpers ────────────────────────────────────────────────────────
-
-def _is_rate_limited(exc: Exception) -> bool:
-    msg = str(exc).lower()
-    return any(kw in msg for kw in ("429", "quota", "resource exhausted", "rate limit", "too many"))
-
-
-def _extract_retry_delay(exc: Exception) -> float:
-    """Parse retryDelay from Gemini 429 error body. Falls back to 30 s."""
-    m = re.search(r"retryDelay['\"]:\s*['\"](\d+)", str(exc))
-    return float(m.group(1)) + 2.0 if m else 30.0
-
-
-def _retry_wait(retry_state) -> float:
-    """Honor the API-supplied retryDelay; fall back to exponential backoff."""
-    exc = retry_state.outcome.exception()
-    if exc and _is_rate_limited(exc):
-        delay = _extract_retry_delay(exc)
-        print(f"\n  [rate-limit] backing off {delay:.0f}s...", flush=True)
-        return delay
-    return min(10.0 * (2 ** retry_state.attempt_number), 120.0)
-
-
-# ── Gemini API call ───────────────────────────────────────────────────────────
+# ── Groq API call ─────────────────────────────────────────────────────────────
 
 @retry(
-    retry=retry_if_exception(_is_rate_limited),
-    wait=_retry_wait,
-    stop=stop_after_attempt(6),
+    retry=retry_if_exception_type(groq_sdk.RateLimitError),
+    wait=wait_exponential(multiplier=2, min=5, max=90),
+    stop=stop_after_attempt(8),
     reraise=True,
 )
-def _call_model(client, model: str, batch: list[dict]) -> str:
-    resp = client.models.generate_content(
-        model=model,
-        contents=_build_prompt(batch),
-        config={
-            "temperature": 0,
-            "response_mime_type": "application/json",
-            "system_instruction": SYSTEM,
-        },
+def _api_call(client: groq_sdk.Groq, batch: list[dict]) -> str:
+    resp = client.chat.completions.create(
+        model=MODEL_GROQ,
+        temperature=0,
+        messages=[
+            {"role": "system", "content": SYSTEM},
+            {"role": "user",   "content": _build_prompt(batch)},
+        ],
+        timeout=45,
     )
-    return resp.text
+    return resp.choices[0].message.content
 
 
-def _is_per_minute_limit(exc: Exception) -> bool:
-    """True only for temporary per-minute 429s (not daily quota exhaustion)."""
-    msg = str(exc).lower()
-    return _is_rate_limited(exc) and ("per minute" in msg or "perminute" in msg)
-
-
-def _api_call(client, batch: list[dict]) -> tuple[str, str]:
-    """Try gemini-2.5-flash-lite; fall back to gemini-2.5-flash on quota/error.
-
-    Per-minute rate limits on lite → re-raise (tenacity already retried).
-    Daily quota exhausted or structural error → try flash.
-    Returns (response_text, provider_tag).
-    """
-    try:
-        return _call_model(client, MODEL_LITE, batch), TAG_LITE
-    except Exception as exc:
-        if _is_per_minute_limit(exc):
-            raise   # temporary per-minute limit; propagate so caller can back off
-        # Daily quota exhausted or structural error on lite → fall back to flash
-        reason = "daily quota" if _is_rate_limited(exc) else str(exc)[:60]
-        print(f"\n  [lite->flash]: {reason}", flush=True)
-    return _call_model(client, MODEL_FLASH, batch), TAG_FLASH
-
-
-def _tag_batch(client, batch: list[dict]) -> list[dict]:
+def _tag_batch(client: groq_sdk.Groq, batch: list[dict]) -> list[dict]:
     """Tag a batch; retry parse once; then row-by-row fallback."""
     for attempt in range(2):
         try:
-            content, provider_tag = _api_call(client, batch)
+            content  = _api_call(client, batch)
             raw_list = _extract_array(content)
             if len(raw_list) != len(batch):
                 raise ValueError(f"expected {len(batch)}, got {len(raw_list)}")
-            return [_validate(r, provider_tag) for r in raw_list]
+            return [_validate(r) for r in raw_list]
+        except groq_sdk.RateLimitError:
+            raise
         except Exception as exc:
             if attempt == 0:
                 print(f"\n  [retry-parse] {exc}", flush=True)
@@ -248,29 +203,28 @@ def _tag_batch(client, batch: list[dict]) -> list[dict]:
     results: list[dict] = []
     for row in batch:
         try:
-            content, provider_tag = _api_call(client, [row])
+            content  = _api_call(client, [row])
             raw_list = _extract_array(content)
-            results.append(_validate(raw_list[0], provider_tag))
+            results.append(_validate(raw_list[0]))
         except Exception as exc:
             print(f"\n  [row-fallback] id={row['id']} -> tag_error ({exc})", flush=True)
             results.append({
                 "themes": ["non_discovery"], "sentiment": "neutral", "segment": "unknown",
                 "discovery_related": False, "one_line": "", "language": "en",
-                "tag_error": True, "tagged_by": TAG_LITE,
+                "tag_error": True, "tagged_by": PROVIDER_TAG,
             })
-        time.sleep(2)
+        time.sleep(0.5)
     return results
 
 
 # ── main ──────────────────────────────────────────────────────────────────────
 
 def main() -> None:
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        raise SystemExit("ERROR: GEMINI_API_KEY not set in .env.local")
+        raise SystemExit("ERROR: GROQ_API_KEY not set in .env.local")
 
-    from google import genai
-    client = genai.Client(api_key=api_key)
+    client = groq_sdk.Groq(api_key=api_key)
 
     if not TAGGED.exists():
         raise SystemExit(f"ERROR: {TAGGED} not found — run tag.py first")
@@ -289,24 +243,29 @@ def main() -> None:
         print(f"  {src:<12} {len(grp):>5}")
     print()
 
-    # Resume from retag checkpoint
+    # Resume from checkpoint — but only rows that are still in error_df
+    # (rows already merged into good_df via a prior retag run are skipped)
     retagged: list[dict] = []
     done_ids: set[str]   = set()
     if RETAG_CKPT.exists():
-        ckpt_df  = pd.read_parquet(RETAG_CKPT)
-        retagged = ckpt_df.to_dict("records")
-        done_ids = {r["id"] for r in retagged}
-        print(f"Retag checkpoint: {len(done_ids)} already re-tagged. Resuming...")
+        ckpt_df    = pd.read_parquet(RETAG_CKPT)
+        still_err  = set(error_df["id"])
+        ckpt_valid = ckpt_df[ckpt_df["id"].isin(still_err)]
+        n_stale    = len(ckpt_df) - len(ckpt_valid)
+        if n_stale:
+            print(f"Checkpoint: {n_stale} rows already merged into good_df — skipping them.")
+        if len(ckpt_valid):
+            retagged = ckpt_valid.to_dict("records")
+            done_ids = {r["id"] for r in retagged}
+            print(f"Resuming from checkpoint: {len(done_ids)} rows already re-tagged.")
 
     remaining   = error_df[~error_df["id"].isin(done_ids)].reset_index(drop=True)
     n_remaining = len(remaining)
     n_batches   = (n_remaining + BATCH_SIZE - 1) // BATCH_SIZE
 
-    print(f"Primary model : {MODEL_LITE}")
-    print(f"Fallback model: {MODEL_FLASH}")
-    print(f"To tag  : {n_remaining} rows in {n_batches} batches of {BATCH_SIZE}")
-    print(f"Pacing  : {INTER_CALL_SLEEP}s between calls (~{60/INTER_CALL_SLEEP:.0f} RPM)")
-    print(f"ETA     : ~{n_batches * INTER_CALL_SLEEP / 60:.0f} min\n")
+    print(f"Model  : {MODEL_GROQ}")
+    print(f"To tag : {n_remaining} rows in {n_batches} batches of {BATCH_SIZE}")
+    print(f"Checkpoint every {CKPT_EVERY} rows -> {RETAG_CKPT.name}\n")
 
     t0        = time.time()
     rows_done = 0
@@ -340,7 +299,7 @@ def main() -> None:
 
     pd.DataFrame(retagged).to_parquet(RETAG_CKPT, index=False)
 
-    # Merge good + retagged, write back in-place
+    # Merge: good rows + all retagged rows → write back in-place
     retagged_df = pd.DataFrame(retagged)
     combined    = pd.concat([good_df, retagged_df], ignore_index=True)
     combined.to_parquet(TAGGED, index=False)
