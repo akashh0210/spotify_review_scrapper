@@ -51,7 +51,7 @@ def _make_metadata(row: dict) -> dict:
         "score":             _safe_num(row.get("score"),   0.0),
         "sentiment":         str(row.get("sentiment") or ""),
         "segment":           str(row.get("segment")   or ""),
-        "themes":            ", ".join(list(row.get("themes") or [])),
+        "themes":            ", ".join(list(row["themes"]) if row.get("themes") is not None else []),
         "discovery_related": int(bool(row.get("discovery_related", False))),
         "tagged_by":         str(row.get("tagged_by") or ""),
         "language":          str(row.get("language")  or "en"),
