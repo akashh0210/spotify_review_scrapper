@@ -55,8 +55,8 @@ Sources (Phase 1)
 | `test_gemini.py` | One-call smoke test to confirm GEMINI_API_KEY + google-genai SDK work before a full run. | — | stdout |
 | `tag.py` | Groq 8B batched tagging (primary) with Gemini 2.0 Flash daily-quota fallback. Strict JSON schema: themes, sentiment, segment, discovery_related, one_line, language, tag_error, **tagged_by** (model provenance). Depth-counting JSON parser avoids trailing-bracket corruption. Retry once on parse failure; row-by-row fallback on second failure; FALLBACK tag on individual row failure. Sources tagged: playstore (all), appstore (partial 1370/2340), reddit (all), forum (all). | `data/clean/reviews.parquet` | `data/tagged/reviews_tagged.parquet` |
 | `embed.py` | sentence-transformers `all-MiniLM-L6-v2` (local) → ChromaDB persistent collection `spotify_reviews`. | `data/tagged/reviews_tagged.parquet` | ChromaDB at `./chroma_db/` |
-| `aggregate.py` | Count themes, sentiment, segment splits. Pull top quoted examples per theme. | `data/tagged/reviews_tagged.parquet` | `data/insights/summary.json` |
-| `rag.py` | Groq 70B answering the six discovery questions over ChromaDB-retrieved evidence. Cited verbatim quotes only. | ChromaDB + `data/insights/summary.json` | `data/insights/answers.json` |
+| `aggregate.py` | Counts themes, sentiment, segment splits. Builds segment × discovery-theme cross-tab (for Q5). Pulls top quoted examples per theme. Score-weighted top items for Q6 (reddit upvotes / forum kudos). | `data/tagged/reviews_tagged.parquet` | `data/insights/summary.json` |
+| `rag.py` | Groq 70B (llama-3.3-70b-versatile) answering Q1–Q6 via theme-filtered or free retrieval from ChromaDB. Emits one answer object per question: `{question, answer, quotes[{text,source,rating}]}`. Q3 uses free text retrieval (no tag filter). Q5 served from summary.json cross-tab. Q6 uses score-weighted retrieval. Cited verbatim quotes only — never fabricated. | ChromaDB + `data/insights/summary.json` | `data/insights/answers.json` |
 
 ---
 
@@ -83,6 +83,23 @@ Sources (Phase 1)
 
 ---
 
+## Question → engine mapping (Phase 5 contract)
+
+Phase 5 must emit `answers.json` with one object per question. This table is the contract between aggregate.py / rag.py and the dashboard.
+
+| Q | Question | Primary signal | Answering path | Score weighting |
+|---|---|---|---|---|
+| Q1 | Why do users struggle to discover new music? | `discovery_friction`, `no_control_or_intent`, `filter_bubble` | Theme-filtered Chroma retrieval → Groq 70B synthesis | No |
+| Q2 | Most common frustrations with recommendations? | `generic_recommendations`, `discover_weekly_dailymix`, `autoplay_radio_loop` + `sentiment=negative` | Theme + sentiment filtered retrieval → synthesis | No |
+| Q3 | Listening behaviors / JTBD? | Raw `text` (no tag field — JTBD not captured in tagging schema) | Free retrieval over all discovery-related text → inference | No |
+| Q4 | What causes repeat listening? | `recommendation_repetition`, `wants_new_but_safe` | Theme-filtered retrieval → synthesis | No |
+| Q5 | Segment differences? | `segment` × discovery themes cross-tab | Served directly from `summary.json` (no RAG call needed) | N/A |
+| Q6 | Unmet needs? | `one_line` + `text` across all sources | Score-weighted top-k retrieval (`score` = reddit upvotes / forum kudos) → synthesis | **Yes — `score` field** |
+
+> Q3 and Q6 are handled entirely at the RAG retrieval layer. Q3 has no corresponding tagging field and must not be re-tagged. Q6 uses the `score` column that was preserved from Phase 2 specifically for this weighting.
+
+---
+
 ## Status by phase
 
 | Phase | Description | Status | Notes |
@@ -91,6 +108,6 @@ Sources (Phase 1)
 | 2 | Clean / dedupe / normalize | **Done** | 7,431 raw → 6,778 clean (653 dropped: 584 too-short, 57 duplicates, 12 no-alpha). Non-English: 17 rows (0.3%) — kept, tagged in Phase 3. Schema: `id\|source\|text\|rating\|date\|score\|url`. |
 | 3 | Tag (Groq 8B) | **Done** | Groq llama-3.1-8b-instant, temp=0, batch=10, checkpoint every 50 rows. Coverage: playstore (all 2,730) + appstore (1,370/2,340 — partial by design, sufficient signal) + reddit (all 1,681) + forum (all 27). Appstore remainder intentionally skipped. Output: `reviews_tagged.parquet`. |
 | 4 | Embed (sentence-transformers → Chroma) | Pending | — |
-| 5 | Aggregate + six-question answers | Pending | — |
+| 5 | Aggregate + six-question answers | Pending | aggregate.py: theme counts, sentiment, segment × theme cross-tab (Q5), score-weighted Q6 items. rag.py: one answer object per Q1–Q6 with cited quotes. Q3 = free retrieval; Q5 = from summary.json; Q6 = score-weighted. |
 | 6 | Streamlit app | Pending | — |
 | 7 | Deploy (public URL) | Pending | — |

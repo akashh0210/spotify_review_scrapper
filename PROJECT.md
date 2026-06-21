@@ -10,14 +10,18 @@ Deliverable: a **deployed, public** web app + a single slide explaining how it w
 
 ## 2. Focus (do not let this sprawl)
 
-Analyze Spotify reviews to answer these six questions:
+Analyze Spotify reviews to answer these six questions. Each is a first-class deliverable of the engine, answered by a specific mechanism. Phase 5 must emit one explicit answer object per question (generated text + cited quotes), and the dashboard must render all six.
 
-1. Why do users struggle to discover new music?
-2. What are the most common frustrations with recommendations?
-3. What listening behaviors are users trying to achieve?
-4. What causes users to repeatedly listen to the same content?
-5. Which user segments experience different discovery challenges?
-6. What unmet needs emerge consistently across reviews?
+| # | Question | Answering mechanism | Tags / fields used |
+|---|---|---|---|
+| Q1 | Why do users struggle to discover new music? | Theme aggregation + RAG synthesis | `discovery_friction`, `no_control_or_intent`, `filter_bubble` |
+| Q2 | What are the most common frustrations with recommendations? | Theme aggregation + sentiment breakdown | `generic_recommendations`, `discover_weekly_dailymix`, `autoplay_radio_loop` + `sentiment=negative` |
+| Q3 | What listening behaviors are users trying to achieve? (JTBD) | **RAG over raw `text` only** — no tagging field exists for JTBD. Do NOT re-tag. | Retrieved from `text` at query time |
+| Q4 | What causes users to repeatedly listen to the same content? | Theme aggregation + RAG synthesis | `recommendation_repetition`, `wants_new_but_safe` |
+| Q5 | Which user segments experience different discovery challenges? | `segment` × discovery-theme cross-tab (Phase 5 aggregation) | `segment` × all discovery themes |
+| Q6 | What unmet needs emerge consistently across reviews? | RAG over `one_line` + `text`, **weighted by `score`** (reddit upvotes / forum kudos) to surface high-support signals | `one_line`, `text`, `score` |
+
+> **Q3 and Q6 are handled entirely at the RAG retrieval layer** — no tagging field, no re-tagging required. Q3 relies on the model's ability to infer user intent from review language. Q6 uses `score` weighting so heavily up-voted reddit threads and high-kudos forum posts rank above casual one-liners.
 
 Everything the engine does maps back to these six. Bugs / billing / UI / ads are tagged and **excluded** from the discovery analysis (kept only as a "non-discovery" bucket for context).
 
@@ -54,8 +58,13 @@ Target volume: a few thousand items total is plenty. Do not over-scrape.
 2. **Clean / dedupe / normalize** → `data/clean/reviews.parquet` (unified schema: `id, source, text, rating, date, raw_meta`)
 3. **Tag** (Groq 8B, batched, JSON output) → `data/tagged/reviews_tagged.parquet`
 4. **Embed** (sentence-transformers) → ChromaDB persistent collection `spotify_reviews`
-5. **Aggregate** → `data/insights/summary.json` (theme counts, sentiment, segment splits, top quotes per theme)
+5. **Aggregate** → `data/insights/summary.json` (theme counts, sentiment, segment splits, segment × theme cross-tab, top quotes per theme, score-weighted top items for Q6)
 6. **Answer the six questions** (Groq 70B over retrieved evidence) → `data/insights/answers.json`
+   - One answer object per question: `{ "question": "Q1", "answer": "...", "quotes": [{text, source, rating}] }`
+   - Q1/Q2/Q4: theme-filtered retrieval → synthesis
+   - Q3: free retrieval over raw text → JTBD inference
+   - Q5: served from summary.json cross-tab (no RAG needed)
+   - Q6: score-weighted retrieval over one_line + text → synthesis
 
 ## 6. Tagging schema (Groq 8B must return strict JSON per review)
 
@@ -82,7 +91,7 @@ Temperature 0 for tagging. Validate/parse JSON; on failure, retry once then skip
 - Headline metrics: total reviews analyzed, % discovery-related, sentiment split
 - Plotly bar: theme frequency (discovery themes only)
 - Plotly: segment × top-frustration breakdown
-- The **six questions**, each rendered with its Groq-generated answer + 2–3 cited verbatim quotes (source + rating shown)
+- The **six questions** (Q1–Q6), each rendered with its Groq-generated answer + 2–3 cited verbatim quotes (source + rating shown). The dashboard must map 1:1 to the PS: Q5 renders a segment × theme heatmap from summary.json; Q6 shows score-weighted quotes. See §2 for the Q→mechanism table.
 
 **Tab 2 — Ask the Reviews (RAG)**
 - Free-text box → retrieve top-k from Chroma → Groq 70B answers **only from retrieved reviews**, with quoted evidence and source tags
