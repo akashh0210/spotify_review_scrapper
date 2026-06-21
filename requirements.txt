@@ -8,8 +8,7 @@ sentence-transformers==3.4.1
 # If Streamlit Cloud fails at this line, create a packages.txt in the repo root
 # containing: python3-dev
 # Then re-deploy. The +cpu variant is safe for CPU-only inference (embeddings).
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.3.1+cpu
+torch==2.9.1+cpu --extra-index-url https://download.pytorch.org/whl/cpu
 
 # ── unpinned — update freely ───────────────────────────────────────────────────
 google-genai
