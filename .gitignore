@@ -15,9 +15,7 @@ data/raw/
 data/clean/
 data/tagged/
 
-# Vector store
-chroma_db/
-*.sqlite3
+# Vector store — chroma_db/ is committed for Streamlit Cloud deploy (pre-built index)
 
 # Keep computed insights and folder structure
 !data/insights/
