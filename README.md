@@ -1,5 +1,7 @@
 # Spotify Discovery Review Engine
 
+**Live app: [STREAMLIT_URL]**
+
 An AI-powered engine that analyzes Spotify user reviews at scale to surface **why users struggle to discover new music and fall back on repeat-listening**. Built as the Part 1 review-analysis workflow for a Growth PM capstone.
 
 It ingests reviews from the Google Play Store, the Apple App Store, and Reddit (r/spotify, r/truespotify), tags each one with discovery-related themes and segments using an LLM, stores them in a vector database, and exposes the findings through a dashboard and a retrieval-augmented "ask the reviews" interface.

@@ -1,13 +1,23 @@
-groq
+# ── Streamlit Cloud deploy — pinned for reproducibility ───────────────────────
+streamlit==1.45.0
+groq==1.4.0
+chromadb==1.0.0
+sentence-transformers==3.4.1
+
+# PyTorch CPU-only build — avoids pulling the full 2 GB CUDA wheel on Streamlit Cloud.
+# If Streamlit Cloud fails at this line, create a packages.txt in the repo root
+# containing: python3-dev
+# Then re-deploy. The +cpu variant is safe for CPU-only inference (embeddings).
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.3.1+cpu
+
+# ── unpinned — update freely ───────────────────────────────────────────────────
 google-genai
 google-play-scraper
 requests
 beautifulsoup4
-chromadb
-sentence-transformers
-streamlit
-plotly
 pandas
 pyarrow
 python-dotenv
 tenacity
+plotly
