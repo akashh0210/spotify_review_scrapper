@@ -1,0 +1,950 @@
+{
+  "overview": {
+    "total_reviews": 5708,
+    "sources": {
+      "appstore": {
+        "count": 1276,
+        "pct": 22.4,
+        "date_range": {
+          "earliest": "2026-06-06T22:36:33-07:00",
+          "latest": "2026-06-16T23:35:47-07:00"
+        }
+      },
+      "forum": {
+        "count": 27,
+        "pct": 0.5,
+        "date_range": {
+          "earliest": null,
+          "latest": null
+        }
+      },
+      "playstore": {
+        "count": 2728,
+        "pct": 47.8,
+        "date_range": {
+          "earliest": "2024-08-21T09:07:52+00:00",
+          "latest": "2026-06-17T17:21:03+00:00"
+        }
+      },
+      "reddit": {
+        "count": 1677,
+        "pct": 29.4,
+        "date_range": {
+          "earliest": "2016-04-12T07:29:08+00:00",
+          "latest": "2025-05-19T05:36:37+00:00"
+        }
+      }
+    },
+    "discovery_related": {
+      "count": 4033,
+      "pct": 70.7
+    },
+    "sentiment": {
+      "positive": {
+        "count": 1508,
+        "pct": 26.4
+      },
+      "neutral": {
+        "count": 989,
+        "pct": 17.3
+      },
+      "negative": {
+        "count": 3211,
+        "pct": 56.3
+      }
+    }
+  },
+  "theme_frequency": {
+    "discovery_friction": {
+      "count": 1104,
+      "pct_of_all": 19.3,
+      "pct_of_discovery": 27.4,
+      "top_quotes": [
+        {
+          "text": "Is anyone else frustrated by how hard it is to find new music now on Spotify?\n\nLong-time Spotify user here, premium member for 8 years at least. I remember when I used to find so much new music on Spotify. I realise that I'm getting less and less new music offered to me, and I'm getting tired of what I'm listening to on repeat.\n\n* Discover Weekly d",
+          "source": "reddit",
+          "rating": null,
+          "score": 539.0
+        },
+        {
+          "text": "PLEASE CREATE A SELECT MULTIPLE PLAYLISTS OPTION\n\nPLEASE CREATE A SELECT MULTIPLE PLAYLISTS OPTION Hi I would love and appreciate it if you guys allow the Spotify app to select multiple playlists from the “your library” Tab into the playlists i created. The idea is that the “your library” tab would display an edit option or 3 horizontal dots or the",
+          "source": "forum",
+          "rating": null,
+          "score": 5.0
+        },
+        {
+          "text": "Its a really good app I just wish I could listen offline for free like it used to be",
+          "source": "playstore",
+          "rating": 1.0,
+          "score": null
+        }
+      ]
+    },
+    "recommendation_repetition": {
+      "count": 154,
+      "pct_of_all": 2.7,
+      "pct_of_discovery": 3.8,
+      "top_quotes": [
+        {
+          "text": "I'm sick of spotify's algorithm\n\nSpotify just keeps recommending me the same songs over and over and over again and I'm sick of it, I'm sick of each one of my 39 playlists. This app couldn't recommend me new songs even if its life depended on it. The homepage is a collection of useless podcasts that I can't hide, and albums I listened to tens of ti",
+          "source": "reddit",
+          "rating": null,
+          "score": 204.0
+        },
+        {
+          "text": "Keeps getting worse. I've been using Spotify for a decade and paying for premium almost as long but I am now looking for an alternative platform. Everything good about this app just keeps getting worse - my discover weekly is now full of artists I already listen to, my release radar has artists I've listened to once, the widget has been ruined, day",
+          "source": "playstore",
+          "rating": 1.0,
+          "score": null
+        },
+        {
+          "text": "Repetitive\n\nJust repeats the same songs",
+          "source": "appstore",
+          "rating": 1.0,
+          "score": null
+        }
+      ]
+    },
+    "generic_recommendations": {
+      "count": 462,
+      "pct_of_all": 8.1,
+      "pct_of_discovery": 11.5,
+      "top_quotes": [
+        {
+          "text": "Underrated Web Player Enhancements\n\nSo I've seen a lot of complaints about Spotify for bugs, bad design, slow to adapt, ... Well don't get me wrong, these are often true.\n\nBut can we actually appreciate how refined the web player now looks? It's been about half a year since Spotify started testing the web player design into the desktop app to give ",
+          "source": "reddit",
+          "rating": null,
+          "score": 111.0
+        },
+        {
+          "text": "Dj\n\nYour ideas for Spotify⁠ would be: Lock Screen Design Allow custom control icons ( stars, hearts, different themes). Not currently available. Mobile Playlist Management Select and move multiple songs at once on the phone app. Limited support today; many users would like a better bulk-edit feature. Public Play Counter Show stream/play counts unde",
+          "source": "forum",
+          "rating": null,
+          "score": 3.0
+        },
+        {
+          "text": "The app is getting more expensive yet is dropping in quality. I deal with some form of a visual glitch on a daily basis some much worse than others and it often times has connection issues. Also have to mention there terrible shuffle system they have always had.",
+          "source": "playstore",
+          "rating": 2.0,
+          "score": null
+        }
+      ]
+    },
+    "discover_weekly_dailymix": {
+      "count": 240,
+      "pct_of_all": 4.2,
+      "pct_of_discovery": 6.0,
+      "top_quotes": [
+        {
+          "text": "A new type of personalized playlists? Search for „music picked” and get hundreds of „microgenre”, very quickly updating playlists. Are those some „references” for daily mixes?",
+          "source": "reddit",
+          "rating": null,
+          "score": 268.0
+        },
+        {
+          "text": "Solved!!Superuser ContributionNo Sagittarius Cosmic Playlist?\n\nPlan Duo Premium Country USA Device iPhone 11 Pro Operating System iOS 16.6.1 My Question or Issue Why is there not a cosmic playlist for the astrological sign of Sagittarius?? I feel very left out and considering I pay for this monthly, I’d appreciate having one for all the fellow Sagi",
+          "source": "forum",
+          "rating": null,
+          "score": 13.0
+        },
+        {
+          "text": "Spotify\n\nBecause yungblud was on here and mj",
+          "source": "appstore",
+          "rating": 5.0,
+          "score": null
+        }
+      ]
+    },
+    "autoplay_radio_loop": {
+      "count": 908,
+      "pct_of_all": 15.9,
+      "pct_of_discovery": 22.5,
+      "top_quotes": [
+        {
+          "text": "These new Spotify TikTok ripoffs autoplay at full volume when I open the app. Anyone know how to disable this? I know how to find the play button on my own, I don't need to have my head blasted with music I didn't request.",
+          "source": "reddit",
+          "rating": null,
+          "score": 265.0
+        },
+        {
+          "text": "Solved!!How do I disable or filter out AI generated songs\n\nI don't want to listen to AI songs, how can I disable or filter them out? Solved! Go to Solution.",
+          "source": "forum",
+          "rating": null,
+          "score": 253.0
+        },
+        {
+          "text": "Spotify Connect can't seem to be disabled (the toggle in settings changes nothing) and is constantly causing playback interruptions when I try to use the PC app.",
+          "source": "playstore",
+          "rating": 1.0,
+          "score": null
+        }
+      ]
+    },
+    "no_control_or_intent": {
+      "count": 793,
+      "pct_of_all": 13.9,
+      "pct_of_discovery": 19.7,
+      "top_quotes": [
+        {
+          "text": "Just go the new Spotify Home Page... I may have to cancel\n\nHow do I contact Spotify to tell them they just made the app unusable? I am sensitive to random sounds and the new home page autoplays LOUDLY whatever is being scrolled over, it actually makes me sick.",
+          "source": "reddit",
+          "rating": null,
+          "score": 72.0
+        },
+        {
+          "text": "Dj\n\nYour ideas for Spotify⁠ would be: Lock Screen Design Allow custom control icons ( stars, hearts, different themes). Not currently available. Mobile Playlist Management Select and move multiple songs at once on the phone app. Limited support today; many users would like a better bulk-edit feature. Public Play Counter Show stream/play counts unde",
+          "source": "forum",
+          "rating": null,
+          "score": 3.0
+        },
+        {
+          "text": "Decent app, but I wish they'd create a thumb-down feature (like Pandora). We shouldn't have to navigate multiple screens just to tell the app we never want to hear a song again. Also not a fan of now being forced to use a larger widget. If I wanted to use the larger widget, I would've. but the smaller widget gives almost everything I need (play/pau",
+          "source": "playstore",
+          "rating": 3.0,
+          "score": null
+        }
+      ]
+    },
+    "filter_bubble": {
+      "count": 293,
+      "pct_of_all": 5.1,
+      "pct_of_discovery": 7.3,
+      "top_quotes": [
+        {
+          "text": "Spotify put MY face on my FRIEND'S Discover Weekly?",
+          "source": "reddit",
+          "rating": null,
+          "score": 89.0
+        },
+        {
+          "text": "Add a way to easily suggest addition of albums that are not available on Spotify\n\nSome albums may simply just not be currently available on Spotify but are not being withheld due to licensing issues. We should have a way to suggest albums be added to Spotify.",
+          "source": "forum",
+          "rating": null,
+          "score": 1.0
+        },
+        {
+          "text": "Every update gets worse. No choice but to use the new widget and it is just a blob of colour. Time to. check out Amazon",
+          "source": "playstore",
+          "rating": 1.0,
+          "score": null
+        }
+      ]
+    },
+    "wants_new_but_safe": {
+      "count": 20,
+      "pct_of_all": 0.4,
+      "pct_of_discovery": 0.5,
+      "top_quotes": [
+        {
+          "text": "LF playlists of only HYPE songs\n\nI cannot stand slow songs or anything that my brain perceives as “sad”. The lyrics can be about anything tragic, as long as the beat does not sound “sad”. High BPM helps!\n\nI am looking for playlists of rap, reaggaeton, electronic, or basically anything that is Not country or US radio-pop that has NO slow songs.\n\nI a",
+          "source": "reddit",
+          "rating": null,
+          "score": 6.0
+        },
+        {
+          "text": "just need more old school hip hop",
+          "source": "playstore",
+          "rating": 5.0,
+          "score": null
+        },
+        {
+          "text": "Increase reading time\n\nMeets my needs for music and podcasts, but doesn’t for reading. For me, having unlimited access to audiobooks with my paid subscription is ideal as I tend to use up the allotted time each month.",
+          "source": "appstore",
+          "rating": 5.0,
+          "score": null
+        }
+      ]
+    },
+    "positive_discovery": {
+      "count": 1025,
+      "pct_of_all": 18.0,
+      "pct_of_discovery": 25.4,
+      "top_quotes": [
+        {
+          "text": "this has been my daily mix 2 cover for a year now 💀",
+          "source": "reddit",
+          "rating": null,
+          "score": 206.0
+        },
+        {
+          "text": "[Guidelines] Discovery & Promo\n\nWelcome to Discovery & Promo ! This is the place to celebrate the new and emerging artists you've probably never heard of. We welcome artists and creators to promote their work here - but please only post links to the same content once. You can recommend content by sharing a link in a relevant thread, or you can star",
+          "source": "forum",
+          "rating": null,
+          "score": 37.0
+        },
+        {
+          "text": "Loving listening to my playlist on Spotify!",
+          "source": "playstore",
+          "rating": 5.0,
+          "score": null
+        }
+      ]
+    },
+    "non_discovery": {
+      "count": 1882,
+      "pct_of_all": 33.0,
+      "pct_of_discovery": 5.1,
+      "top_quotes": [
+        {
+          "text": "Goodbye Spotify\n\nBeen a Spotify loyalist for 8 years coming this May, Premium user for around 7, and it's time to say goodbye. ***Yes, this is another UI complaint post...feel free to disregard if you're tired of these (trust me, I get it).***\n\nAfter seeing a [Community Manager's response to the Community Post](https://community.spotify.com/t5/App-",
+          "source": "reddit",
+          "rating": null,
+          "score": 281.0
+        },
+        {
+          "text": "Superuser ContributionFollow for follow\n\nIm newer to spotify and have a variety of playlists but looking for followers and check out others stuff as well. I will follow back! Rock on! https://open.spotify.com/user/31j6pcejwzvramraj7gp7skq5vhq?si=wWD4nbFSTNeIHbzYXdLL4A",
+          "source": "forum",
+          "rating": null,
+          "score": 6.0
+        },
+        {
+          "text": "The new widget is terrible. It's huge, doesn't work like it's supposed to and is just obnoxious. I liked my smaller widget and now it just won't let me use that and forces the large one. I want my smaller and simpler widget back. it worked just fine.",
+          "source": "playstore",
+          "rating": 3.0,
+          "score": null
+        }
+      ]
+    }
+  },
+  "segment_x_theme": {
+    "casual": {
+      "total": 2407,
+      "discovery_rate": 78.0,
+      "top_themes": [
+        {
+          "theme": "positive_discovery",
+          "count": 607,
+          "pct": 25.2
+        },
+        {
+          "theme": "discovery_friction",
+          "count": 511,
+          "pct": 21.2
+        },
+        {
+          "theme": "autoplay_radio_loop",
+          "count": 352,
+          "pct": 14.6
+        }
+      ],
+      "theme_rates": {
+        "discovery_friction": {
+          "count": 511,
+          "pct": 21.2
+        },
+        "recommendation_repetition": {
+          "count": 35,
+          "pct": 1.5
+        },
+        "generic_recommendations": {
+          "count": 249,
+          "pct": 10.3
+        },
+        "discover_weekly_dailymix": {
+          "count": 97,
+          "pct": 4.0
+        },
+        "autoplay_radio_loop": {
+          "count": 352,
+          "pct": 14.6
+        },
+        "no_control_or_intent": {
+          "count": 342,
+          "pct": 14.2
+        },
+        "filter_bubble": {
+          "count": 92,
+          "pct": 3.8
+        },
+        "wants_new_but_safe": {
+          "count": 11,
+          "pct": 0.5
+        },
+        "positive_discovery": {
+          "count": 607,
+          "pct": 25.2
+        }
+      }
+    },
+    "power_user": {
+      "total": 986,
+      "discovery_rate": 88.1,
+      "top_themes": [
+        {
+          "theme": "discovery_friction",
+          "count": 278,
+          "pct": 28.2
+        },
+        {
+          "theme": "autoplay_radio_loop",
+          "count": 274,
+          "pct": 27.8
+        },
+        {
+          "theme": "no_control_or_intent",
+          "count": 251,
+          "pct": 25.5
+        }
+      ],
+      "theme_rates": {
+        "discovery_friction": {
+          "count": 278,
+          "pct": 28.2
+        },
+        "recommendation_repetition": {
+          "count": 73,
+          "pct": 7.4
+        },
+        "generic_recommendations": {
+          "count": 103,
+          "pct": 10.4
+        },
+        "discover_weekly_dailymix": {
+          "count": 38,
+          "pct": 3.9
+        },
+        "autoplay_radio_loop": {
+          "count": 274,
+          "pct": 27.8
+        },
+        "no_control_or_intent": {
+          "count": 251,
+          "pct": 25.5
+        },
+        "filter_bubble": {
+          "count": 92,
+          "pct": 9.3
+        },
+        "wants_new_but_safe": {
+          "count": 2,
+          "pct": 0.2
+        },
+        "positive_discovery": {
+          "count": 116,
+          "pct": 11.8
+        }
+      }
+    },
+    "genre_explorer": {
+      "total": 218,
+      "discovery_rate": 89.4,
+      "top_themes": [
+        {
+          "theme": "positive_discovery",
+          "count": 85,
+          "pct": 39.0
+        },
+        {
+          "theme": "discovery_friction",
+          "count": 43,
+          "pct": 19.7
+        },
+        {
+          "theme": "discover_weekly_dailymix",
+          "count": 30,
+          "pct": 13.8
+        }
+      ],
+      "theme_rates": {
+        "discovery_friction": {
+          "count": 43,
+          "pct": 19.7
+        },
+        "recommendation_repetition": {
+          "count": 9,
+          "pct": 4.1
+        },
+        "generic_recommendations": {
+          "count": 15,
+          "pct": 6.9
+        },
+        "discover_weekly_dailymix": {
+          "count": 30,
+          "pct": 13.8
+        },
+        "autoplay_radio_loop": {
+          "count": 4,
+          "pct": 1.8
+        },
+        "no_control_or_intent": {
+          "count": 2,
+          "pct": 0.9
+        },
+        "filter_bubble": {
+          "count": 21,
+          "pct": 9.6
+        },
+        "wants_new_but_safe": {
+          "count": 3,
+          "pct": 1.4
+        },
+        "positive_discovery": {
+          "count": 85,
+          "pct": 39.0
+        }
+      }
+    },
+    "mood_context_listener": {
+      "total": 45,
+      "discovery_rate": 93.3,
+      "top_themes": [
+        {
+          "theme": "positive_discovery",
+          "count": 30,
+          "pct": 66.7
+        },
+        {
+          "theme": "discovery_friction",
+          "count": 5,
+          "pct": 11.1
+        },
+        {
+          "theme": "generic_recommendations",
+          "count": 2,
+          "pct": 4.4
+        }
+      ],
+      "theme_rates": {
+        "discovery_friction": {
+          "count": 5,
+          "pct": 11.1
+        },
+        "generic_recommendations": {
+          "count": 2,
+          "pct": 4.4
+        },
+        "discover_weekly_dailymix": {
+          "count": 1,
+          "pct": 2.2
+        },
+        "autoplay_radio_loop": {
+          "count": 2,
+          "pct": 4.4
+        },
+        "no_control_or_intent": {
+          "count": 2,
+          "pct": 4.4
+        },
+        "wants_new_but_safe": {
+          "count": 1,
+          "pct": 2.2
+        },
+        "positive_discovery": {
+          "count": 30,
+          "pct": 66.7
+        }
+      }
+    },
+    "podcast_listener": {
+      "total": 5,
+      "discovery_rate": 40.0,
+      "top_themes": [
+        {
+          "theme": "autoplay_radio_loop",
+          "count": 1,
+          "pct": 20.0
+        },
+        {
+          "theme": "positive_discovery",
+          "count": 1,
+          "pct": 20.0
+        }
+      ],
+      "theme_rates": {
+        "autoplay_radio_loop": {
+          "count": 1,
+          "pct": 20.0
+        },
+        "positive_discovery": {
+          "count": 1,
+          "pct": 20.0
+        }
+      }
+    },
+    "unknown": {
+      "total": 2047,
+      "discovery_rate": 51.1,
+      "top_themes": [
+        {
+          "theme": "autoplay_radio_loop",
+          "count": 275,
+          "pct": 13.4
+        },
+        {
+          "theme": "discovery_friction",
+          "count": 267,
+          "pct": 13.0
+        },
+        {
+          "theme": "no_control_or_intent",
+          "count": 196,
+          "pct": 9.6
+        }
+      ],
+      "theme_rates": {
+        "discovery_friction": {
+          "count": 267,
+          "pct": 13.0
+        },
+        "recommendation_repetition": {
+          "count": 37,
+          "pct": 1.8
+        },
+        "generic_recommendations": {
+          "count": 93,
+          "pct": 4.5
+        },
+        "discover_weekly_dailymix": {
+          "count": 74,
+          "pct": 3.6
+        },
+        "autoplay_radio_loop": {
+          "count": 275,
+          "pct": 13.4
+        },
+        "no_control_or_intent": {
+          "count": 196,
+          "pct": 9.6
+        },
+        "filter_bubble": {
+          "count": 88,
+          "pct": 4.3
+        },
+        "wants_new_but_safe": {
+          "count": 3,
+          "pct": 0.1
+        },
+        "positive_discovery": {
+          "count": 186,
+          "pct": 9.1
+        }
+      }
+    },
+    "_analysis": {
+      "highest_discovery_friction": {
+        "segment": "power_user",
+        "pct": 28.2
+      }
+    }
+  },
+  "unmet_needs": [
+    {
+      "theme": "discovery_friction",
+      "weighted_score": 2185.0,
+      "item_count": 376,
+      "top_quote": {
+        "text": "Is anyone else frustrated by how hard it is to find new music now on Spotify?\n\nLong-time Spotify user here, premium member for 8 years at least. I remember when I used to find so much new music on Spotify. I realise that I'm getting less and less new music offered to me, and I'm getting tired of what I'm listening to on repeat.\n\n* Discover Weekly d",
+        "source": "reddit",
+        "score": 539.0,
+        "rating": null
+      }
+    },
+    {
+      "theme": "autoplay_radio_loop",
+      "weighted_score": 1504.0,
+      "item_count": 292,
+      "top_quote": {
+        "text": "These new Spotify TikTok ripoffs autoplay at full volume when I open the app. Anyone know how to disable this? I know how to find the play button on my own, I don't need to have my head blasted with music I didn't request.",
+        "source": "reddit",
+        "score": 265.0,
+        "rating": null
+      }
+    },
+    {
+      "theme": "positive_discovery",
+      "weighted_score": 1469.0,
+      "item_count": 176,
+      "top_quote": {
+        "text": "this has been my daily mix 2 cover for a year now 💀",
+        "source": "reddit",
+        "score": 206.0,
+        "rating": null
+      }
+    },
+    {
+      "theme": "discover_weekly_dailymix",
+      "weighted_score": 1110.0,
+      "item_count": 183,
+      "top_quote": {
+        "text": "A new type of personalized playlists? Search for „music picked” and get hundreds of „microgenre”, very quickly updating playlists. Are those some „references” for daily mixes?",
+        "source": "reddit",
+        "score": 268.0,
+        "rating": null
+      }
+    },
+    {
+      "theme": "recommendation_repetition",
+      "weighted_score": 791.0,
+      "item_count": 90,
+      "top_quote": {
+        "text": "I'm sick of spotify's algorithm\n\nSpotify just keeps recommending me the same songs over and over and over again and I'm sick of it, I'm sick of each one of my 39 playlists. This app couldn't recommend me new songs even if its life depended on it. The homepage is a collection of useless podcasts that I can't hide, and albums I listened to tens of ti",
+        "source": "reddit",
+        "score": 204.0,
+        "rating": null
+      }
+    }
+  ],
+  "top_quotes": {
+    "discovery_friction": [
+      {
+        "text": "Is anyone else frustrated by how hard it is to find new music now on Spotify?\n\nLong-time Spotify user here, premium member for 8 years at least. I remember when I used to find so much new music on Spotify. I realise that I'm getting less and less new music offered to me, and I'm getting tired of what I'm listening to on repeat.\n\n* Discover Weekly d",
+        "source": "reddit",
+        "rating": null,
+        "score": 539.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "discovery_friction"
+      },
+      {
+        "text": "taking my moment to yell into the void\n\nShame on you, you dumb corporate losers. You can innovate yourselves to death - You still won’t be profitable. \n\nThe heart button allowed for a **one step** process for bookmarking songs that I enjoyed. It also provided a clear visual indication as to which songs I preferred on a past listen-through of a give",
+        "source": "reddit",
+        "rating": null,
+        "score": 187.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "discovery_friction"
+      },
+      {
+        "text": "Drop your playlists!\n\nI feel as if I have been listening to a lot of the same music for months now and am in desperate need to branch out and hear new things. I listen to practically any genre!",
+        "source": "reddit",
+        "rating": null,
+        "score": 117.0,
+        "sentiment": "negative",
+        "segment": "casual",
+        "theme": "discovery_friction"
+      }
+    ],
+    "recommendation_repetition": [
+      {
+        "text": "I'm sick of spotify's algorithm\n\nSpotify just keeps recommending me the same songs over and over and over again and I'm sick of it, I'm sick of each one of my 39 playlists. This app couldn't recommend me new songs even if its life depended on it. The homepage is a collection of useless podcasts that I can't hide, and albums I listened to tens of ti",
+        "source": "reddit",
+        "rating": null,
+        "score": 204.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "recommendation_repetition"
+      },
+      {
+        "text": "All the Spotify playlist recycle the same songs\n\nYesterday I listened to a Spotify workout playlist that could fall into various electronic categories: edm/ \ndubstep/remix/dance\n\nToday I tried to pick a new Spotify workout playlist and it had all the same songs on it as the other one with one or two random songs I listened to yesterday\n\nSo I clicke",
+        "source": "reddit",
+        "rating": null,
+        "score": 133.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "recommendation_repetition"
+      },
+      {
+        "text": "Spotify getting repetitive\n\nIs it a problem on my side or is there a feedback loop in Spotify's current state?\n\nI keep having the same damn songs played over and over again when I let Spotify \"autoplay\", even the ones I'm hiding from the list, they keep coming back!\n\nIt wasn't happening before and I kept discovering new music, that's why I was on S",
+        "source": "reddit",
+        "rating": null,
+        "score": 112.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "recommendation_repetition"
+      }
+    ],
+    "generic_recommendations": [
+      {
+        "text": "Underrated Web Player Enhancements\n\nSo I've seen a lot of complaints about Spotify for bugs, bad design, slow to adapt, ... Well don't get me wrong, these are often true.\n\nBut can we actually appreciate how refined the web player now looks? It's been about half a year since Spotify started testing the web player design into the desktop app to give ",
+        "source": "reddit",
+        "rating": null,
+        "score": 111.0,
+        "sentiment": "positive",
+        "segment": "power_user",
+        "theme": "generic_recommendations"
+      },
+      {
+        "text": "Is this \"AI DJ\" just a marketing gimmick or is there something deeper I'm missing?\n\nI've been trying to listen to this the past couple of days and it seems to me there's no real \"AI\" to it. It's essentially just stringing together sets that are ripped from other playlists with a voice that says the name of some of the artists it's gonna play in the",
+        "source": "reddit",
+        "rating": null,
+        "score": 95.0,
+        "sentiment": "neutral",
+        "segment": "unknown",
+        "theme": "generic_recommendations"
+      },
+      {
+        "text": "Sick of 'Made for you' playlists\n\nIs anybody else absolutely hating that majority of playlists are now 'made for you'? I'm not talking about song radio or daily mixes, but something that should be as straightforward as 'Best of Indie 2015' or something. Theres no reason for it to be specially curated compared to my previously listened to songs/arti",
+        "source": "reddit",
+        "rating": null,
+        "score": 43.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "generic_recommendations"
+      }
+    ],
+    "discover_weekly_dailymix": [
+      {
+        "text": "A new type of personalized playlists? Search for „music picked” and get hundreds of „microgenre”, very quickly updating playlists. Are those some „references” for daily mixes?",
+        "source": "reddit",
+        "rating": null,
+        "score": 268.0,
+        "sentiment": "neutral",
+        "segment": "unknown",
+        "theme": "discover_weekly_dailymix"
+      },
+      {
+        "text": "Call me old, but I’d prefer this interface combined with some modern features like daily mixes.\n\nPartially a joke, but *some apps* do need to learn to keep it simple.",
+        "source": "reddit",
+        "rating": null,
+        "score": 148.0,
+        "sentiment": "neutral",
+        "segment": "casual",
+        "theme": "discover_weekly_dailymix"
+      },
+      {
+        "text": "Spotify Daily Mix is no different than Favorites on shuffle nowadays",
+        "source": "reddit",
+        "rating": null,
+        "score": 76.0,
+        "sentiment": "negative",
+        "segment": "casual",
+        "theme": "discover_weekly_dailymix"
+      }
+    ],
+    "autoplay_radio_loop": [
+      {
+        "text": "These new Spotify TikTok ripoffs autoplay at full volume when I open the app. Anyone know how to disable this? I know how to find the play button on my own, I don't need to have my head blasted with music I didn't request.",
+        "source": "reddit",
+        "rating": null,
+        "score": 265.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "autoplay_radio_loop"
+      },
+      {
+        "text": "Solved!!How do I disable or filter out AI generated songs\n\nI don't want to listen to AI songs, how can I disable or filter them out? Solved! Go to Solution.",
+        "source": "forum",
+        "rating": null,
+        "score": 253.0,
+        "sentiment": "negative",
+        "segment": "unknown",
+        "theme": "autoplay_radio_loop"
+      },
+      {
+        "text": "I'm sick of spotify's algorithm\n\nSpotify just keeps recommending me the same songs over and over and over again and I'm sick of it, I'm sick of each one of my 39 playlists. This app couldn't recommend me new songs even if its life depended on it. The homepage is a collection of useless podcasts that I can't hide, and albums I listened to tens of ti",
+        "source": "reddit",
+        "rating": null,
+        "score": 204.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "autoplay_radio_loop"
+      }
+    ],
+    "no_control_or_intent": [
+      {
+        "text": "Just go the new Spotify Home Page... I may have to cancel\n\nHow do I contact Spotify to tell them they just made the app unusable? I am sensitive to random sounds and the new home page autoplays LOUDLY whatever is being scrolled over, it actually makes me sick.",
+        "source": "reddit",
+        "rating": null,
+        "score": 72.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "no_control_or_intent"
+      },
+      {
+        "text": "Any way to totally disable smart shuffle?\n\nI like to look through what shuffle gives me, add some to queue, then redo the shuffle. The new thing makes that not work, because double tapping shuffle makes it spaz for 30 seconds while it does the new thing instead of just refreshing. I will never intentionally enable the new thing (I use discover week",
+        "source": "reddit",
+        "rating": null,
+        "score": 43.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "no_control_or_intent"
+      },
+      {
+        "text": "Sick of 'Made for you' playlists\n\nIs anybody else absolutely hating that majority of playlists are now 'made for you'? I'm not talking about song radio or daily mixes, but something that should be as straightforward as 'Best of Indie 2015' or something. Theres no reason for it to be specially curated compared to my previously listened to songs/arti",
+        "source": "reddit",
+        "rating": null,
+        "score": 43.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "no_control_or_intent"
+      }
+    ],
+    "filter_bubble": [
+      {
+        "text": "Spotify put MY face on my FRIEND'S Discover Weekly?",
+        "source": "reddit",
+        "rating": null,
+        "score": 89.0,
+        "sentiment": "negative",
+        "segment": "casual",
+        "theme": "filter_bubble"
+      },
+      {
+        "text": "Concerns around shady looking playlist\n\nSorry.. big post incoming. I'm pretty concerned I've been added to a bogus playlist that fakes streams. It's by a group called WAVR.AI their website and social media sound very very shady, and I've read some horror stories. To clarify I never contacted these people and never saw them listed on any curator web",
+        "source": "reddit",
+        "rating": null,
+        "score": 44.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "filter_bubble"
+      },
+      {
+        "text": "To me this is a perfect example of why Spotify is getting worse and worse. Why do I not have the option to dislike, remove, or hide all of these non-relevant suggestions to improve my algorithm and taste profile?!\n\nI don't want to listen to Rihanna or Noah Cyrus or any of these random fucking audiobooks! \n\nBut there's no way for me to tell Spotify ",
+        "source": "reddit",
+        "rating": null,
+        "score": 36.0,
+        "sentiment": "negative",
+        "segment": "power_user",
+        "theme": "filter_bubble"
+      }
+    ],
+    "wants_new_but_safe": [
+      {
+        "text": "LF playlists of only HYPE songs\n\nI cannot stand slow songs or anything that my brain perceives as “sad”. The lyrics can be about anything tragic, as long as the beat does not sound “sad”. High BPM helps!\n\nI am looking for playlists of rap, reaggaeton, electronic, or basically anything that is Not country or US radio-pop that has NO slow songs.\n\nI a",
+        "source": "reddit",
+        "rating": null,
+        "score": 6.0,
+        "sentiment": "positive",
+        "segment": "casual",
+        "theme": "wants_new_but_safe"
+      },
+      {
+        "text": "Who are your favourite small solo artists and bands?\n\nLooking forward to explore anything that is not played on radio or tv.",
+        "source": "reddit",
+        "rating": null,
+        "score": 2.0,
+        "sentiment": "positive",
+        "segment": "casual",
+        "theme": "wants_new_but_safe"
+      },
+      {
+        "text": "Best way to convert Pandora station of artists to Spotify?\n\nI've been using Pandora since its very beginning. I have a custom station that consists of a very long list of my favorite artists from multiple genres. In the past, I loved Pandora's recommendations. It introduced me to many new artists who have become my favorites.\n\nI'm considering switc",
+        "source": "reddit",
+        "rating": null,
+        "score": 1.0,
+        "sentiment": "neutral",
+        "segment": "unknown",
+        "theme": "wants_new_but_safe"
+      }
+    ],
+    "positive_discovery": [
+      {
+        "text": "this has been my daily mix 2 cover for a year now 💀",
+        "source": "reddit",
+        "rating": null,
+        "score": 206.0,
+        "sentiment": "positive",
+        "segment": "casual",
+        "theme": "positive_discovery"
+      },
+      {
+        "text": "Has Spotify finally fixed their shuffle algorithm?\n\nI’m listening to my playlist of favorites and I’m not recognizing half the songs because it’s been so long since I’ve heard them. I listen to this playlist on shuffle all the time and it’s feeling like I’m getting new songs in the rotation. This is not the setting where they add songs they think w",
+        "source": "reddit",
+        "rating": null,
+        "score": 200.0,
+        "sentiment": "positive",
+        "segment": "unknown",
+        "theme": "positive_discovery"
+      },
+      {
+        "text": "I finally did it--I switched back to Spotify after one year with Apple Music, and I am SO happy\n\nAfter one year trying to stick it out with Apple Music (AM), I’m so, so glad--and I can't emphasize this enough--that I made the switch back to Spotify.\n\nI’m more of a lurker on Reddit, but I’m so pleased I have to share it here to see what you think an",
+        "source": "reddit",
+        "rating": null,
+        "score": 160.0,
+        "sentiment": "positive",
+        "segment": "casual",
+        "theme": "positive_discovery"
+      }
+    ]
+  }
+}
