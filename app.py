@@ -16,13 +16,14 @@ import streamlit as st
 from chromadb.utils.embedding_functions import SentenceTransformerEmbeddingFunction
 from dotenv import load_dotenv
 
-load_dotenv(".env.local") or load_dotenv()
-
 st.set_page_config(
     page_title="Spotify Discovery Review Engine",
     page_icon="🎵",
     layout="wide",
 )
+
+load_dotenv(".env.local")
+load_dotenv()
 
 # ── paths & constants ─────────────────────────────────────────────────────────
 BASE         = Path(__file__).parent
