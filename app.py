@@ -18,6 +18,12 @@ from dotenv import load_dotenv
 
 load_dotenv(".env.local") or load_dotenv()
 
+st.set_page_config(
+    page_title="Spotify Discovery Review Engine",
+    page_icon="🎵",
+    layout="wide",
+)
+
 # ── paths & constants ─────────────────────────────────────────────────────────
 BASE         = Path(__file__).parent
 SUMMARY_PATH = BASE / "data" / "insights" / "summary.json"
@@ -49,13 +55,6 @@ RAG_SYSTEM = (
     "Answer using ONLY the retrieved evidence provided — no external knowledge. "
     "Name specific Spotify features (Discover Weekly, Daily Mix, Song Radio, autoplay) when mentioned in evidence. "
     "Do not quote verbatim in the answer body — cited reviews are shown separately."
-)
-
-# ── page config ───────────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="Spotify Discovery Review Engine",
-    page_icon="🎵",
-    layout="wide",
 )
 
 # ── data loaders (cached) ──────────────────────────────────────────────────────
