@@ -2,7 +2,7 @@
 
 > **AI-powered review analysis engine** that ingests Spotify user feedback at scale and surfaces *why users struggle to discover new music and fall back on repeat-listening* — built as Part 1 of a Growth PM capstone.
 
-**🚀 Live app: [STREAMLIT_URL]**
+**🚀 Live app: [https://spotifyreviewscrapper-02.streamlit.app/]**
 
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.45-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
