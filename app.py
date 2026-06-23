@@ -25,6 +25,263 @@ st.set_page_config(
 load_dotenv(".env.local")
 load_dotenv()
 
+# ── Spotify dark theme ────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+/* ── CSS variables ── */
+:root {
+    --bg:        #121212;
+    --card:      #181818;
+    --card-hov:  #282828;
+    --accent:    #1DB954;
+    --accent-lt: #1ed760;
+    --text:      #FFFFFF;
+    --text-sec:  #B3B3B3;
+    --border:    #282828;
+    --negative:  #E01E5A;
+    --font:      -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+
+/* ── Global ── */
+html, body, [class*="css"] {
+    background-color: var(--bg) !important;
+    color: var(--text) !important;
+    font-family: var(--font) !important;
+    font-size: 17px !important;
+}
+.stApp, .main, section.main > div {
+    background-color: var(--bg) !important;
+}
+header[data-testid="stHeader"] {
+    background-color: var(--bg) !important;
+    border-bottom: 1px solid var(--border) !important;
+}
+.block-container {
+    padding-top: 1.5rem !important;
+    max-width: 1200px !important;
+}
+
+/* ── App header bar ── */
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--border);
+}
+.app-header-dot {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    color: #000;
+    font-weight: 700;
+}
+.app-header-title {
+    font-size: 34px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.1;
+    margin: 0;
+}
+.app-header-sub {
+    font-size: 14px;
+    color: var(--text-sec);
+    margin: 3px 0 0 0;
+}
+
+/* ── Metric cards ── */
+.metric-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px 18px;
+    min-height: 115px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: border-color 0.15s ease;
+}
+.metric-card:hover { border-color: var(--accent); }
+.metric-number {
+    color: var(--accent);
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.05;
+    margin-bottom: 6px;
+}
+.metric-label {
+    color: var(--text-sec);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+.metric-sub {
+    color: var(--text-sec);
+    font-size: 13px;
+    margin-top: 4px;
+    opacity: 0.8;
+}
+
+/* ── Section headers ── */
+h2, h3, [data-testid="stHeading"] {
+    color: var(--text) !important;
+    font-size: 24px !important;
+    font-weight: 700 !important;
+    margin-top: 28px !important;
+}
+
+/* ── Tabs ── */
+.stTabs [data-baseweb="tab-list"] {
+    background: transparent !important;
+    border-bottom: 1px solid var(--border) !important;
+    gap: 4px !important;
+}
+.stTabs [data-baseweb="tab"] {
+    background: transparent !important;
+    color: var(--text-sec) !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    border-bottom: 2px solid transparent !important;
+    padding: 10px 20px !important;
+}
+.stTabs [aria-selected="true"] {
+    color: var(--accent) !important;
+    border-bottom-color: var(--accent) !important;
+    background: transparent !important;
+}
+.stTabs [data-baseweb="tab-panel"] {
+    background: var(--bg) !important;
+    padding-top: 20px !important;
+}
+
+/* ── Expanders ── */
+details {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    margin-bottom: 8px !important;
+    overflow: hidden !important;
+}
+details[open] { border-color: var(--accent) !important; }
+details summary {
+    padding: 14px 18px !important;
+    font-size: 17px !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+    cursor: pointer !important;
+    list-style: none !important;
+}
+details summary:hover { background: var(--card-hov) !important; }
+details > div {
+    padding: 16px 20px 20px !important;
+    border-top: 1px solid var(--border) !important;
+    background: var(--card) !important;
+    color: var(--text) !important;
+}
+
+/* ── Quote blocks ── */
+.quote-block {
+    border-left: 3px solid var(--accent);
+    padding: 10px 16px;
+    margin: 10px 0 14px 0;
+    background: rgba(29, 185, 84, 0.07);
+    border-radius: 0 8px 8px 0;
+}
+.quote-text {
+    font-style: italic;
+    color: var(--text-sec);
+    font-size: 15px;
+    line-height: 1.55;
+    margin-bottom: 7px;
+}
+.quote-meta { font-size: 13px; color: #666; }
+
+/* ── Dividers ── */
+hr { border-color: var(--border) !important; margin: 26px 0 !important; }
+
+/* ── Captions ── */
+small, .stCaption, [data-testid="stCaptionContainer"] p {
+    color: var(--text-sec) !important;
+    font-size: 14px !important;
+}
+
+/* ── Regular buttons ── */
+.stButton > button {
+    background: var(--card) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    padding: 8px 12px !important;
+    transition: all 0.15s ease !important;
+}
+.stButton > button:hover {
+    background: var(--card-hov) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+/* ── Primary / submit button ── */
+.stButton > button[kind="primary"],
+button[data-testid="stFormSubmitButton"] {
+    background: var(--accent) !important;
+    color: #000 !important;
+    border: none !important;
+    border-radius: 50px !important;
+    font-weight: 700 !important;
+    font-size: 15px !important;
+    padding: 10px 32px !important;
+}
+.stButton > button[kind="primary"]:hover,
+button[data-testid="stFormSubmitButton"]:hover {
+    background: var(--accent-lt) !important;
+}
+
+/* ── Text area ── */
+.stTextArea textarea {
+    background: var(--card) !important;
+    color: var(--text) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    font-size: 16px !important;
+    min-height: 100px !important;
+}
+.stTextArea textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 1px var(--accent) !important;
+}
+.stTextArea label { color: var(--text-sec) !important; font-size: 14px !important; }
+
+/* ── Form ── */
+[data-testid="stForm"] {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* ── Info/error/markdown ── */
+.stAlert { background: var(--card) !important; border-color: var(--border) !important; }
+.stMarkdown p { color: var(--text) !important; font-size: 17px !important; line-height: 1.6 !important; }
+.stMarkdown li { color: var(--text) !important; font-size: 16px !important; }
+.stMarkdown strong { color: var(--text) !important; }
+blockquote {
+    border-left: 3px solid var(--accent) !important;
+    background: rgba(29,185,84,0.06) !important;
+    color: var(--text-sec) !important;
+    padding: 10px 16px !important;
+    border-radius: 0 6px 6px 0 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 # ── paths & constants ─────────────────────────────────────────────────────────
 BASE         = Path(__file__).parent
 SUMMARY_PATH = BASE / "data" / "insights" / "summary.json"
@@ -58,7 +315,7 @@ RAG_SYSTEM = (
     "Do not quote verbatim in the answer body — cited reviews are shown separately."
 )
 
-# ── data loaders (cached) ──────────────────────────────────────────────────────
+# ── data loaders (cached — unchanged) ────────────────────────────────────────
 
 @st.cache_data
 def load_summary() -> dict:
@@ -101,19 +358,48 @@ def _stars(rating) -> str:
         return ""
 
 
+def _metric_card(label: str, number: str, sub: str = "") -> str:
+    sub_html = f'<div class="metric-sub">{sub}</div>' if sub else ""
+    return (
+        f'<div class="metric-card">'
+        f'<div class="metric-number">{number}</div>'
+        f'<div class="metric-label">{label}</div>'
+        f'{sub_html}</div>'
+    )
+
+
 def _render_quote(q: dict) -> None:
     text   = (q.get("text") or "")[:280]
     src    = q.get("source", "")
     rating = q.get("rating")
     score  = q.get("score")
-    parts  = [f"**{src}**"]
     stars  = _stars(rating)
+    parts  = [f"<strong>{src}</strong>"]
     if stars:
         parts.append(stars)
     if score and float(score) > 0:
         parts.append(f"👍 {int(float(score))}")
-    st.markdown(f"> *\"{text}\"*")
-    st.caption("  ·  ".join(parts))
+    meta = "  ·  ".join(parts)
+    st.markdown(
+        f'<div class="quote-block">'
+        f'<div class="quote-text">"{text}"</div>'
+        f'<div class="quote-meta">{meta}</div>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
+# ── dark Plotly base layout ───────────────────────────────────────────────────
+
+_DARK = dict(
+    paper_bgcolor="#121212",
+    plot_bgcolor="#121212",
+    font=dict(color="#FFFFFF", size=14,
+              family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"),
+    title_font=dict(size=18, color="#FFFFFF"),
+    xaxis=dict(gridcolor="#282828", color="#B3B3B3", zerolinecolor="#282828", linecolor="#282828"),
+    yaxis=dict(gridcolor="#282828", color="#B3B3B3", zerolinecolor="#282828", linecolor="#282828"),
+)
 
 
 # ── charts ────────────────────────────────────────────────────────────────────
@@ -124,18 +410,20 @@ def _theme_bar(summary: dict) -> go.Figure:
         [(t.replace("_", " "), v["count"])
          for t, v in tf.items() if t in set(DISCOVERY_THEMES)],
         key=lambda x: x[1],
-    )[-8:]  # bottom-8 so highest appears at top in horizontal bar
+    )[-8:]
     labels, counts = zip(*rows) if rows else ([], [])
     fig = go.Figure(go.Bar(
         x=list(counts), y=list(labels), orientation="h",
         marker_color="#1DB954",
         text=[str(c) for c in counts], textposition="outside",
+        textfont=dict(color="#B3B3B3", size=13),
     ))
     fig.update_layout(
-        title="Top discovery themes (review count)",
+        title="Top discovery themes",
         height=340, showlegend=False,
-        margin=dict(t=40, b=20, l=0, r=60),
+        margin=dict(t=50, b=20, l=0, r=70),
         xaxis_title="Reviews", yaxis_title="",
+        **_DARK,
     )
     return fig
 
@@ -145,17 +433,19 @@ def _sentiment_bar(summary: dict) -> go.Figure:
     labels = ["positive", "neutral", "negative"]
     counts = [sent.get(l, {}).get("count", 0) for l in labels]
     pcts   = [sent.get(l, {}).get("pct", 0) for l in labels]
-    colors = {"positive": "#1DB954", "neutral": "#BBBBBB", "negative": "#E01E5A"}
+    colors = {"positive": "#1DB954", "neutral": "#535353", "negative": "#E01E5A"}
     fig = go.Figure(go.Bar(
         x=labels, y=counts,
         marker_color=[colors[l] for l in labels],
         text=[f"{p:.0f}%" for p in pcts], textposition="auto",
+        textfont=dict(color="#FFFFFF", size=14, family="sans-serif"),
     ))
     fig.update_layout(
         title="Sentiment split",
         height=340, showlegend=False,
-        margin=dict(t=40, b=20, l=0, r=20),
+        margin=dict(t=50, b=20, l=0, r=20),
         yaxis_title="Reviews", xaxis_title="",
+        **_DARK,
     )
     return fig
 
@@ -165,7 +455,6 @@ def _segment_heatmap(summary: dict) -> go.Figure:
     segments = [s for s in ["casual", "power_user", "genre_explorer",
                              "mood_context_listener", "podcast_listener"]
                 if s in seg_data]
-    # Top 6 discovery themes by count
     tf = summary.get("theme_frequency", {})
     top6 = [t for t, _ in sorted(
         [(t, v["count"]) for t, v in tf.items() if t in set(DISCOVERY_THEMES)],
@@ -183,15 +472,17 @@ def _segment_heatmap(summary: dict) -> go.Figure:
         z=z,
         x=[t.replace("_", "<br>") for t in top6],
         y=[s.replace("_", " ") for s in segments],
-        colorscale="Blues",
+        colorscale=[[0, "#1a1a1a"], [0.4, "#0d3320"], [1.0, "#1DB954"]],
         text=text_z, texttemplate="%{text}",
+        textfont=dict(color="#FFFFFF", size=13),
         hovertemplate="Segment: %{y}<br>Theme: %{x}<br>Rate: %{text}<extra></extra>",
     ))
     fig.update_layout(
         title="Theme rate by user segment (%)",
-        height=280,
-        margin=dict(t=40, b=0, l=0, r=0),
+        height=290,
+        margin=dict(t=50, b=0, l=0, r=0),
         xaxis_title="", yaxis_title="",
+        **_DARK,
     )
     return fig
 
@@ -202,14 +493,23 @@ summary = load_summary()
 answers = load_answers()
 ov      = summary.get("overview", {})
 
-tab1, tab2 = st.tabs(["📊 Insights Dashboard", "💬 Ask the Reviews (RAG)"])
+tab1, tab2 = st.tabs(["📊  Insights Dashboard", "💬  Ask the Reviews (RAG)"])
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 1 — INSIGHTS DASHBOARD
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab1:
-    st.title("Spotify Discovery Review Engine")
-    st.caption("5,708 reviews across 4 sources · themes tagged by Groq llama-3.1-8b · answers by llama-3.3-70b")
+
+    # Header bar
+    st.markdown("""
+    <div class="app-header">
+      <div class="app-header-dot">♪</div>
+      <div>
+        <div class="app-header-title">Spotify Discovery Review Engine</div>
+        <div class="app-header-sub">5,708 reviews &nbsp;·&nbsp; 4 sources</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Row 1 — metric cards
     seg_analysis = summary.get("segment_x_theme", {}).get("_analysis", {}).get(
@@ -219,18 +519,26 @@ with tab1:
     top_seg_pct = seg_analysis.get("pct", 0)
 
     m1, m2, m3 = st.columns(3)
-    m1.metric("Total reviews analyzed", f"{ov.get('total_reviews', 0):,}")
-    m2.metric(
-        "Discovery-related",
-        f"{ov.get('discovery_related', {}).get('pct', 0):.1f}%",
-        help="Reviews tagged with at least one discovery theme",
-    )
-    m3.metric(
-        "Most frustrated segment",
-        top_seg,
-        delta=f"{top_seg_pct:.1f}% discovery_friction",
-        delta_color="inverse",
-    )
+    with m1:
+        st.markdown(
+            _metric_card("Total reviews analyzed",
+                         f"{ov.get('total_reviews', 0):,}"),
+            unsafe_allow_html=True,
+        )
+    with m2:
+        st.markdown(
+            _metric_card("Discovery-related",
+                         f"{ov.get('discovery_related', {}).get('pct', 0):.1f}%",
+                         "tagged with at least one discovery theme"),
+            unsafe_allow_html=True,
+        )
+    with m3:
+        st.markdown(
+            _metric_card("Most frustrated segment",
+                         top_seg,
+                         f"{top_seg_pct:.1f}% discovery_friction rate"),
+            unsafe_allow_html=True,
+        )
 
     st.divider()
 
@@ -253,41 +561,41 @@ with tab1:
     for qa in answers:
         qid = qa.get("id", "")
         with st.expander(f"{qid} — {qa['question']}"):
-            # Answer text
             st.markdown(qa.get("answer", ""))
 
-            # Key findings
             findings = qa.get("key_findings", [])
             if findings:
                 st.markdown("**Key findings:**")
                 for f in findings:
                     st.markdown(f"- {f}")
 
-            # Supporting quotes
             quotes = qa.get("supporting_quotes", [])
             if quotes:
                 st.markdown("**Evidence:**")
                 for q in quotes:
                     _render_quote(q)
-                    st.write("")
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 2 — ASK THE REVIEWS (LIVE RAG)
 # ═══════════════════════════════════════════════════════════════════════════════
 with tab2:
-    st.subheader("Ask the Reviews")
-    st.caption(
-        "Ask anything about Spotify user feedback — answers grounded in real reviews "
-        "retrieved from ChromaDB and synthesized by Groq llama-3.3-70b-versatile."
-    )
 
-    # Session state for pre-loading example questions
+    st.markdown("""
+    <div class="app-header">
+      <div class="app-header-dot">♪</div>
+      <div>
+        <div class="app-header-title">Ask the Reviews</div>
+        <div class="app-header-sub">Answers grounded in real reviews &nbsp;·&nbsp; Groq llama-3.3-70b-versatile</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     if "rag_query" not in st.session_state:
         st.session_state.rag_query = ""
 
-    # Example question buttons (2 rows × 3 columns)
-    st.markdown("**Example questions:**")
+    st.markdown("<div style='color:#B3B3B3;font-size:14px;margin-bottom:10px;'>Example questions</div>",
+                unsafe_allow_html=True)
     row1_cols = st.columns(3)
     row2_cols = st.columns(3)
     all_cols  = row1_cols + row2_cols
@@ -299,12 +607,11 @@ with tab2:
 
     st.write("")
 
-    # Input form (form prevents rerun on every keystroke)
     with st.form(key="rag_form", clear_on_submit=False):
         query = st.text_area(
             "Your question:",
             value=st.session_state.rag_query,
-            height=80,
+            height=100,
             placeholder="e.g. Why does Discover Weekly feel repetitive?",
         )
         submitted = st.form_submit_button("Ask the Reviews", type="primary")
@@ -312,7 +619,6 @@ with tab2:
     if submitted and query.strip():
         st.session_state.rag_query = query
 
-        # Retrieve from ChromaDB
         try:
             coll    = get_collection()
             results = coll.query(
@@ -327,7 +633,6 @@ with tab2:
             st.error(f"Retrieval error: {exc}")
             st.stop()
 
-        # Build evidence string for the LLM
         evidence_parts = []
         for doc, meta in zip(docs, metas):
             src    = meta.get("source", "?")
@@ -337,7 +642,6 @@ with tab2:
             evidence_parts.append(f"[{ctx}]\n{doc[:400]}")
         evidence = "\n\n---\n\n".join(evidence_parts)
 
-        # Stream answer
         st.subheader("Answer")
         groq_client = get_groq_client()
 
@@ -363,7 +667,6 @@ with tab2:
         except Exception as exc:
             st.error(f"Generation error: {exc}")
 
-        # Show retrieved source reviews
         st.subheader(f"Retrieved reviews (top {RAG_TOP_K})")
         for i, (doc, meta, dist) in enumerate(zip(docs, metas, dists), 1):
             src     = meta.get("source", "?")
