@@ -56,9 +56,14 @@ header[data-testid="stHeader"] {
     background-color: var(--bg) !important;
     border-bottom: 1px solid var(--border) !important;
 }
+/* Push everything below the native Streamlit header bar */
 .block-container {
-    padding-top: 1.5rem !important;
+    padding-top: 4rem !important;
     max-width: 1200px !important;
+}
+/* Toolbar stays readable but doesn't crowd the tab strip */
+[data-testid="stToolbar"] {
+    background-color: var(--bg) !important;
 }
 
 /* ── App header bar ── */
@@ -71,17 +76,12 @@ header[data-testid="stHeader"] {
     border-bottom: 1px solid var(--border);
 }
 .app-header-dot {
-    width: 36px;
-    height: 36px;
-    background: var(--accent);
-    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-    color: #000;
-    font-weight: 700;
 }
 .app-header-title {
     font-size: 34px;
@@ -374,7 +374,7 @@ def _render_quote(q: dict) -> None:
     rating = q.get("rating")
     score  = q.get("score")
     stars  = _stars(rating)
-    parts  = [f"<strong>{src}</strong>"]
+    parts  = [f"<strong>{src.title()}</strong>"]
     if stars:
         parts.append(stars)
     if score and float(score) > 0:
@@ -407,7 +407,7 @@ _DARK = dict(
 def _theme_bar(summary: dict) -> go.Figure:
     tf = summary.get("theme_frequency", {})
     rows = sorted(
-        [(t.replace("_", " "), v["count"])
+        [(t.replace("_", " ").title(), v["count"])
          for t, v in tf.items() if t in set(DISCOVERY_THEMES)],
         key=lambda x: x[1],
     )[-8:]
@@ -435,7 +435,7 @@ def _sentiment_bar(summary: dict) -> go.Figure:
     pcts   = [sent.get(l, {}).get("pct", 0) for l in labels]
     colors = {"positive": "#1DB954", "neutral": "#535353", "negative": "#E01E5A"}
     fig = go.Figure(go.Bar(
-        x=labels, y=counts,
+        x=[l.title() for l in labels], y=counts,
         marker_color=[colors[l] for l in labels],
         text=[f"{p:.0f}%" for p in pcts], textposition="auto",
         textfont=dict(color="#FFFFFF", size=14, family="sans-serif"),
@@ -471,7 +471,7 @@ def _segment_heatmap(summary: dict) -> go.Figure:
     fig = go.Figure(go.Heatmap(
         z=z,
         x=[t.replace("_", "<br>") for t in top6],
-        y=[s.replace("_", " ") for s in segments],
+        y=[s.replace("_", " ").title() for s in segments],
         colorscale=[[0, "#1a1a1a"], [0.4, "#0d3320"], [1.0, "#1DB954"]],
         text=text_z, texttemplate="%{text}",
         textfont=dict(color="#FFFFFF", size=13),
@@ -503,7 +503,7 @@ with tab1:
     # Header bar
     st.markdown("""
     <div class="app-header">
-      <div class="app-header-dot">♪</div>
+      <div class="app-header-dot"><svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="22" fill="#1DB954"/><path d="M33 17.5C26.8 14.2 15.5 14 10 16.5" stroke="white" stroke-width="2.8" stroke-linecap="round" fill="none"/><path d="M31.5 22.8C26 20 16.5 19.5 11.5 21.8" stroke="white" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M30 27.8C25 25.5 17 25.2 13 27" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/></svg></div>
       <div>
         <div class="app-header-title">Spotify Discovery Review Engine</div>
         <div class="app-header-sub">5,708 reviews &nbsp;·&nbsp; 4 sources</div>
@@ -515,7 +515,7 @@ with tab1:
     seg_analysis = summary.get("segment_x_theme", {}).get("_analysis", {}).get(
         "highest_discovery_friction", {}
     )
-    top_seg     = seg_analysis.get("segment", "power_user").replace("_", " ")
+    top_seg     = seg_analysis.get("segment", "power_user").replace("_", " ").title()
     top_seg_pct = seg_analysis.get("pct", 0)
 
     m1, m2, m3 = st.columns(3)
@@ -536,7 +536,7 @@ with tab1:
         st.markdown(
             _metric_card("Most frustrated segment",
                          top_seg,
-                         f"{top_seg_pct:.1f}% discovery_friction rate"),
+                         f"{top_seg_pct:.1f}% Discovery Friction Rate"),
             unsafe_allow_html=True,
         )
 
@@ -583,7 +583,7 @@ with tab2:
 
     st.markdown("""
     <div class="app-header">
-      <div class="app-header-dot">♪</div>
+      <div class="app-header-dot"><svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="22" fill="#1DB954"/><path d="M33 17.5C26.8 14.2 15.5 14 10 16.5" stroke="white" stroke-width="2.8" stroke-linecap="round" fill="none"/><path d="M31.5 22.8C26 20 16.5 19.5 11.5 21.8" stroke="white" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M30 27.8C25 25.5 17 25.2 13 27" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/></svg></div>
       <div>
         <div class="app-header-title">Ask the Reviews</div>
         <div class="app-header-sub">Answers grounded in real reviews &nbsp;·&nbsp; Groq llama-3.3-70b-versatile</div>
@@ -674,7 +674,7 @@ with tab2:
             rating  = f"⭐ {meta['rating']:.0f}" if meta.get("rating", -1) > 0 else ""
             score   = f"👍 {int(meta['score'])}" if meta.get("score", 0) > 0 else ""
             snippet = doc[:60].replace("\n", " ")
-            label   = f"[{i}] {src} — {snippet}…"
+            label   = f"[{i}] {src.title()} — {snippet}…"
             with st.expander(label):
                 st.write(doc[:500])
                 meta_parts = filter(None, [src, rating, score, f"🏷️ {themes}" if themes else ""])
