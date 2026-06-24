@@ -67,6 +67,19 @@ def _step(name: str, stage: int, cb: Callable | None) -> None:
         print(f"\n[{stage}/{TOTAL_STAGES}] {name} ...", flush=True)
 
 
+def _overwrite_warning(countdown: int = 5) -> None:
+    """Print a countdown warning before destructive pipeline steps."""
+    print(
+        "\nWARNING: This will overwrite existing insights and vectors.\n"
+        "         Ctrl+C to cancel.",
+        flush=True,
+    )
+    for i in range(countdown, 0, -1):
+        print(f"  Continuing in {i}s...", end="\r", flush=True)
+        time.sleep(1)
+    print("  Proceeding.             ", flush=True)
+
+
 def _clear_pipeline_artifacts() -> None:
     """Delete all regenerable outputs so each workflow run starts clean."""
     for d in [RAW_DIR, CLEAN_DIR, TAGGED_DIR]:
@@ -150,8 +163,10 @@ def run_pipeline(
     def _p(name: str, stage: int) -> None:
         _step(name, stage, progress_callback)
 
-    # Stage 0 — clear
+    # Stage 0 — warn then clear
     _p("Clearing previous pipeline artifacts", 0)
+    if progress_callback is None:   # only show CLI countdown (not in Streamlit UI)
+        _overwrite_warning(countdown=5)
     _clear_pipeline_artifacts()
 
     # Stage 1 — scrape / import
