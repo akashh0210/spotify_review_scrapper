@@ -8,7 +8,7 @@ from pathlib import Path
 from google_play_scraper import Sort, reviews
 
 OUTPUT = Path(__file__).parent.parent / "data" / "raw" / "playstore.json"
-APP_ID = "com.spotify.music"
+APP_ID = os.getenv("PLAYSTORE_APP_ID", "com.spotify.music")
 TARGET = int(os.getenv("PLAYSTORE_REVIEW_COUNT", "3000"))
 BATCH = 200
 

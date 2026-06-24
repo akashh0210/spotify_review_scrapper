@@ -376,12 +376,17 @@ def main() -> None:
         done_ids    = {r["id"] for r in tagged_rows}
         print(f"Checkpoint found: {len(done_ids)} rows already tagged.")
 
-    # Tag ONLY reddit + forum from the untagged remainder.
-    # Untagged appstore rows are intentionally skipped — 1370 is sufficient.
-    remaining = df[
-        (~df["id"].isin(done_ids)) &
-        (df["source"].isin(["reddit", "forum"]))
-    ].reset_index(drop=True)
+    # Default: tag only reddit + forum (appstore partial by design).
+    # Set TAG_ALL_SOURCES=1 (e.g. from run_workflow.py) to tag every source.
+    if os.getenv("TAG_ALL_SOURCES") == "1":
+        remaining = df[~df["id"].isin(done_ids)].reset_index(drop=True)
+        source_note = "all sources (TAG_ALL_SOURCES=1)"
+    else:
+        remaining = df[
+            (~df["id"].isin(done_ids)) &
+            (df["source"].isin(["reddit", "forum"]))
+        ].reset_index(drop=True)
+        source_note = "reddit + forum only (appstore partial kept as-is)"
 
     n_ckpt      = len(done_ids)
     n_remaining = len(remaining)
@@ -389,7 +394,7 @@ def main() -> None:
     n_batches   = (n_remaining + BATCH_SIZE - 1) // BATCH_SIZE
 
     print(f"Model  : {MODEL_GROQ} (primary) / {MODEL_GEMINI} (daily-quota fallback)")
-    print(f"Sources: reddit + forum only (appstore partial kept as-is from checkpoint)")
+    print(f"Sources: {source_note}")
     print(f"To tag : {n_remaining}  |  checkpoint: {n_ckpt}  |  final total: ~{n_final}")
     print(f"Batches: {n_batches} x {BATCH_SIZE}")
     print(f"Checkpoint every {CKPT_EVERY} rows -> {CKPT.name}\n")

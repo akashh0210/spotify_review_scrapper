@@ -493,7 +493,7 @@ summary = load_summary()
 answers = load_answers()
 ov      = summary.get("overview", {})
 
-tab1, tab2 = st.tabs(["📊  Insights Dashboard", "💬  Ask the Reviews (RAG)"])
+tab1, tab2, tab3 = st.tabs(["📊  Insights Dashboard", "💬  Ask the Reviews (RAG)", "⚙️  Run Workflow"])
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 1 — INSIGHTS DASHBOARD
@@ -679,3 +679,180 @@ with tab2:
                 st.write(doc[:500])
                 meta_parts = filter(None, [src, rating, score, f"🏷️ {themes}" if themes else ""])
                 st.caption(f"dist={dist:.3f}  ·  " + "  ·  ".join(meta_parts))
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# TAB 3 — RUN WORKFLOW
+# ═══════════════════════════════════════════════════════════════════════════════
+with tab3:
+
+    st.markdown("""
+    <div class="app-header">
+      <div class="app-header-dot"><svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><circle cx="22" cy="22" r="22" fill="#1DB954"/><path d="M33 17.5C26.8 14.2 15.5 14 10 16.5" stroke="white" stroke-width="2.8" stroke-linecap="round" fill="none"/><path d="M31.5 22.8C26 20 16.5 19.5 11.5 21.8" stroke="white" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M30 27.8C25 25.5 17 25.2 13 27" stroke="white" stroke-width="2" stroke-linecap="round" fill="none"/></svg></div>
+      <div>
+        <div class="app-header-title">Run Workflow</div>
+        <div class="app-header-sub">Re-run the full pipeline against a new data source</div>
+      </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    Point the engine at a new app or data file and regenerate all insights end-to-end.
+    Each run fully replaces the previous pipeline outputs (raw → clean → tag → embed → aggregate).
+
+    > **Note:** Real-time streaming is intentionally out of scope. The tagging step
+    > (Stage 3) calls Groq's API and takes ~2 min per 100 rows on the free tier.
+    > Keep reviews under **1,500** to stay within the daily token budget.
+    """)
+
+    source_choice = st.radio(
+        "Data source", ["Play Store app", "Upload CSV"],
+        horizontal=True,
+    )
+
+    st.divider()
+
+    if source_choice == "Play Store app":
+        col_a, col_b = st.columns([2, 1])
+        with col_a:
+            wf_app_id = st.text_input(
+                "App ID", value="com.spotify.music",
+                help="Google Play package name, e.g. com.netflix.mediaclient",
+            )
+        with col_b:
+            wf_count = st.slider("Reviews to scrape", 100, 2000, 500, 100)
+
+        if wf_count > 1500:
+            st.warning(
+                f"⚠️ {wf_count} reviews ≈ {wf_count * 150:,} tokens — "
+                "may exceed Groq free-tier daily limit. Consider 500–1,000."
+            )
+
+        run_btn = st.button("▶  Run Pipeline", type="primary", key="wf_run_ps")
+        uploaded_csv = None
+
+    else:
+        uploaded_csv = st.file_uploader(
+            "Upload CSV — must contain a **text** column. "
+            "Optional: rating (1–5), date, score, source, url.",
+            type=["csv"],
+        )
+        wf_max_rows = st.slider("Max rows to process", 100, 2000, 500, 100)
+        wf_app_id   = "com.spotify.music"
+        wf_count    = 500
+
+        if wf_max_rows > 1500:
+            st.warning(
+                f"⚠️ {wf_max_rows} rows ≈ {wf_max_rows * 150:,} tokens — "
+                "may exceed Groq free-tier daily limit."
+            )
+
+        run_btn = st.button(
+            "▶  Run Pipeline", type="primary", key="wf_run_csv",
+            disabled=(uploaded_csv is None),
+        )
+
+    # ── pipeline execution ──────────────────────────────────────────────────
+    if run_btn:
+        import sys as _sys
+        _sys.path.insert(0, str(BASE / "src"))
+        from run_workflow import run_pipeline as _run_pipeline
+
+        # Save uploaded CSV to a temp path
+        csv_tmp = None
+        if source_choice == "Upload CSV" and uploaded_csv is not None:
+            import tempfile, shutil as _shutil
+            tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".csv")
+            tmp.write(uploaded_csv.read())
+            tmp.close()
+            csv_tmp = tmp.name
+
+        # Progress state
+        progress_bar   = st.progress(0.0)
+        stage_text     = st.empty()
+        stage_log      = st.container()
+        completed: list[str] = []
+
+        def _on_stage(name: str, current: int, total: int) -> None:
+            progress_bar.progress(current / total)
+            stage_text.info(f"⏳ Stage {current}/{total}: **{name}**")
+            completed.append(f"✅ Stage {current}: {name}")
+            with stage_log:
+                for msg in completed[:-1]:
+                    st.caption(msg)
+
+        try:
+            wf_result = _run_pipeline(
+                source="playstore" if source_choice == "Play Store app" else "csv",
+                app_id=wf_app_id,
+                count=wf_count,
+                csv_path=csv_tmp,
+                max_csv_rows=wf_max_rows if source_choice == "Upload CSV" else 2000,
+                progress_callback=_on_stage,
+            )
+        except Exception as exc:
+            st.error(f"Pipeline failed: {exc}")
+            if csv_tmp:
+                import os as _os
+                _os.unlink(csv_tmp)
+            st.stop()
+
+        if csv_tmp:
+            import os as _os
+            _os.unlink(csv_tmp)
+
+        progress_bar.progress(1.0)
+        stage_text.success(
+            f"✅ Pipeline complete in {wf_result['elapsed_s']:.0f}s "
+            f"({wf_result['elapsed_s']/60:.1f} min)"
+        )
+
+        # Invalidate caches so the dashboard reflects fresh data
+        load_summary.clear()
+        load_answers.clear()
+        st.cache_resource.clear()
+
+        # ── results ────────────────────────────────────────────────────────
+        st.divider()
+        st.subheader("Results")
+
+        r1, r2, r3 = st.columns(3)
+        r1.markdown(
+            _metric_card("Raw items", f"{wf_result['raw_count']:,}"),
+            unsafe_allow_html=True,
+        )
+        r2.markdown(
+            _metric_card("Clean rows", f"{wf_result['clean_count']:,}"),
+            unsafe_allow_html=True,
+        )
+        r3.markdown(
+            _metric_card("Discovery-related", f"{wf_result['disc_pct']:.1f}%"),
+            unsafe_allow_html=True,
+        )
+
+        st.divider()
+
+        # Fresh summary and answers from disk
+        fresh_summary = load_summary()
+        fresh_answers = load_answers()
+
+        st.subheader("Theme Frequencies")
+        st.plotly_chart(_theme_bar(fresh_summary), use_container_width=True)
+
+        st.subheader("The Six Discovery Questions")
+        for qa in fresh_answers:
+            qid = qa.get("id", "")
+            with st.expander(f"{qid} — {qa['question']}"):
+                st.markdown(qa.get("answer", ""))
+                findings = qa.get("key_findings", [])
+                if findings:
+                    st.markdown("**Key findings:**")
+                    for f in findings:
+                        st.markdown(f"- {f}")
+                for q in qa.get("supporting_quotes", []):
+                    _render_quote(q)
+
+        st.info(
+            "Dashboard tab now reflects these fresh insights. "
+            "Reload the page to see the updated charts and answers."
+        )

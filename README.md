@@ -92,6 +92,26 @@ The engine ingests **7,431 raw reviews** from four channels, tags every review w
 
 ---
 
+## Re-runnable workflow
+
+The engine is designed as a **re-runnable workflow** — not a one-time script on a frozen dataset. Point it at any Play Store app or CSV and regenerate all insights end-to-end with one command.
+
+```bash
+# Analyse a different app (e.g. YouTube Music)
+python src/run_workflow.py --source playstore --app-id com.google.android.apps.youtube.music --count 500
+
+# Analyse a CSV of your own reviews
+python src/run_workflow.py --source csv --path my_reviews.csv --max-rows 1000
+```
+
+**CSV format:** must contain a `text` column. Optional: `rating` (1–5), `date`, `source`, `score`, `url`.
+
+**Rate-limit note:** tagging uses Groq's free tier (~40 rows/min). Keep `--count` / `--max-rows` ≤ 1,500 to stay within the daily token budget. Larger datasets will take 30–60 min.
+
+**Tab 3 in the app** ("Run Workflow") provides the same capability with a UI — app ID input or CSV upload, per-stage progress bar, and immediate results rendering. Real-time streaming is intentionally out of scope per the assignment brief.
+
+---
+
 ## Pipeline — run in order
 
 Each stage writes to disk; the pipeline is fully resumable.

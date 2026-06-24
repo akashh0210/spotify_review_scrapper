@@ -98,7 +98,10 @@ def _dedup_key(text: str) -> str:
 # ── per-source loaders ────────────────────────────────────────────────────────
 
 def load_playstore() -> list[dict]:
-    raw = json.loads((RAW / "playstore.json").read_text(encoding="utf-8"))
+    p = RAW / "playstore.json"
+    if not p.exists():
+        return []
+    raw = json.loads(p.read_text(encoding="utf-8"))
     rows = []
     for r in raw:
         text = _clean_text(r.get("content"), "playstore")
@@ -115,7 +118,10 @@ def load_playstore() -> list[dict]:
 
 
 def load_appstore() -> list[dict]:
-    raw = json.loads((RAW / "appstore.json").read_text(encoding="utf-8"))
+    p = RAW / "appstore.json"
+    if not p.exists():
+        return []
+    raw = json.loads(p.read_text(encoding="utf-8"))
     rows = []
     for r in raw:
         title = (r.get("title") or "").strip()
@@ -135,7 +141,10 @@ def load_appstore() -> list[dict]:
 
 
 def load_reddit() -> list[dict]:
-    raw = json.loads((RAW / "reddit.json").read_text(encoding="utf-8"))
+    p = RAW / "reddit.json"
+    if not p.exists():
+        return []
+    raw = json.loads(p.read_text(encoding="utf-8"))
     rows = []
     for r in raw:
         title    = (r.get("title")    or "").strip()
@@ -155,7 +164,10 @@ def load_reddit() -> list[dict]:
 
 
 def load_forum() -> list[dict]:
-    raw = json.loads((RAW / "forum.json").read_text(encoding="utf-8"))
+    p = RAW / "forum.json"
+    if not p.exists():
+        return []
+    raw = json.loads(p.read_text(encoding="utf-8"))
     rows = []
     for r in raw:
         title = (r.get("title") or "").strip()
@@ -171,6 +183,27 @@ def load_forum() -> list[dict]:
             "date":   None,
             "score":  float(r["kudos"]) if r.get("kudos") is not None else None,
             "url":    url,
+        })
+    return rows
+
+
+def _load_csv_input() -> list[dict]:
+    """Load csv_input.json written by run_workflow.py (already cleaned schema)."""
+    p = RAW / "csv_input.json"
+    if not p.exists():
+        return []
+    raw = json.loads(p.read_text(encoding="utf-8"))
+    rows = []
+    for r in raw:
+        text = _clean_text(str(r.get("text", "")), "csv")
+        rows.append({
+            "id":     _stable_id("csv", r.get("id") or text),
+            "source": str(r.get("source", "csv")),
+            "text":   text,
+            "rating": float(r["rating"]) if r.get("rating") is not None else None,
+            "date":   _parse_date(r.get("date")),
+            "score":  float(r["score"]) if r.get("score") is not None else None,
+            "url":    r.get("url"),
         })
     return rows
 
@@ -200,6 +233,9 @@ def main() -> None:
         ("reddit",    load_reddit),
         ("forum",     load_forum),
     ]
+    # csv_input.json written by run_workflow.py — included automatically if present
+    if (RAW / "csv_input.json").exists():
+        loaders.append(("csv", _load_csv_input))
 
     all_rows: list[dict] = []
     stats: dict[str, dict] = {}
